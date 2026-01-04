@@ -293,10 +293,7 @@ body {
     flex: 1;
 }
 
-/* Error Message */
-.error-message {
-    color: var(--danger-color);
-
+/* Form Row */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -348,24 +345,25 @@ select.success {
     border-color: var(--success-green);
 }
 
+/* Error Message */
 .error-message {
-    color: var(--error-red);
-
+    display: none;  /* Hidden by default */
+    color: #dc3545;
     font-size: 12px;
     margin-top: 5px;
-    display: none;
 }
 
-
-.form-group.has-error .error-message {
-    display: block;
+.error-message.show {
+    display: block;  /* Only show when .show class is added */
 }
 
 /* Info Text */
 .info-text {
+    display: block;
+    color: #6c757d;
     font-size: 12px;
-    color: var(--text-muted);
     margin-top: 5px;
+    font-style: italic;
 }
 
 /* Buttons */
@@ -373,10 +371,6 @@ select.success {
     padding: 12px 30px;
     border: none;
     border-radius: 6px;
-
-.error-message.show {
-    display: block;
-}
 
 /* Security Badge */
 .security-badge {
@@ -709,29 +703,30 @@ select.success {
     display: block;
 }
 
-/* Alert */
+/* Alert Messages */
 .alert {
-    padding: 15px 20px;
-    border-radius: 6px;
+    padding: 15px;
     margin-bottom: 20px;
-    border-left: 4px solid;
+    border-radius: 8px;
+    border: 1px solid transparent;
+}
+
+.alert-error,
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
 }
 
 .alert-success {
-    background: #d4edda;
-    border-color: var(--secondary-color);
+    background-color: #d4edda;
+    border-color: #c3e6cb;
     color: #155724;
-}
-
-.alert-danger {
-    background: #f8d7da;
-    border-color: var(--danger-color);
-    color: #721c24;
 }
 
 .alert-warning {
     background: #fff3cd;
-    border-color: var(--warning-color);
+    border-color: #ffc107;
     color: #856404;
 }
 
