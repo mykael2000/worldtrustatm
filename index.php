@@ -242,6 +242,7 @@ $flash = get_flash();
                            placeholder="CA"
                            value="<?php echo $_POST['state'] ?? ''; ?>">
                     <span class="error-message">Please enter your state</span>
+                </div>
                 
                 <div class="form-group">
                     <label for="zip">ZIP Code <span class="required">*</span></label>
