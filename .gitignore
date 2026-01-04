@@ -1,3 +1,63 @@
+
+# .gitignore for WorldTrust ATM Card Activation System
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database
+*.sql.backup
+*.sql.bak
+
+# Logs
+logs/
+*.log
+error.log
+access.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Sensitive data
+private/
+secrets/
+
+# PHP
+vendor/
+composer.phar
+composer.lock
+
+# Node modules (if using npm for future enhancements)
+node_modules/
+package-lock.json
+
+# Upload directories (if implemented)
+uploads/
+files/
+
+# Cache
+cache/
+*.cache
+
+# OS files
+Thumbs.db
+.DS_Store
 database/
 *.db
 *.sqlite
