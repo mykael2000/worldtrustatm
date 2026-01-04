@@ -240,7 +240,7 @@ function validateExpiry(input) {
         return false;
     }
     
-    const currentYear = parseInt(new Date().getFullYear().toString().substr(-2), 10);
+    const currentYear = parseInt(new Date().getFullYear().toString().slice(-2), 10);
     const currentMonth = new Date().getMonth() + 1;
     
     if (year < currentYear || (year === currentYear && month < currentMonth)) {

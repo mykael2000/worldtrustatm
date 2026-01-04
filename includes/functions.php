@@ -180,4 +180,3 @@ function check_card_session() {
         exit();
     }
 }
-?>

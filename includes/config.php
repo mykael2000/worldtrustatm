@@ -49,4 +49,3 @@ function check_session_timeout() {
     }
     $_SESSION['last_activity'] = time();
 }
-?>
