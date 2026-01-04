@@ -357,11 +357,6 @@ select.success {
     display: block;  /* Only show when .show class is added */
 }
 
-/* Show error messages when input has error class */
-.form-control.error + .error-message {
-    display: block;
-}
-
 .form-group.has-error .error-message {
     display: block;
 }
