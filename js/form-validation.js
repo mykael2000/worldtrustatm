@@ -1,15 +1,12 @@
 /**
-
- * Form Validation and Enhancement for Step 1: Personal & Account Information
-
  * Form Validation JavaScript
  * Real-time client-side validation for index.php
-
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('activationForm');
-
+    if (!form) return;
+    
     const loadingSpinner = document.getElementById('loadingSpinner');
     
     // Form field elements
@@ -17,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const accountNumberInput = document.getElementById('account_number');
     const ssnInput = document.getElementById('ssn_last4');
     const zipInput = document.getElementById('zip');
+    const emailInput = document.getElementById('email');
     
     /**
      * Format phone number as user types
@@ -36,6 +34,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.target.value = value;
             }
         });
+        
+        phoneInput.addEventListener('blur', function() {
+            validatePhone(this);
+        });
     }
     
     /**
@@ -49,6 +51,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             e.target.value = value;
         });
+        
+        accountNumberInput.addEventListener('blur', function() {
+            validateAccount(this);
+        });
     }
     
     /**
@@ -61,6 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 value = value.substr(0, 4);
             }
             e.target.value = value;
+        });
+        
+        ssnInput.addEventListener('blur', function() {
+            validateSSN(this);
         });
     }
     
@@ -78,7 +88,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Real-time validation
+     * Email validation
+     */
+    if (emailInput) {
+        emailInput.addEventListener('blur', function() {
+            validateEmail(this);
+        });
+    }
+    
+    /**
+     * Real-time validation for all inputs
      */
     const inputs = form.querySelectorAll('.form-control');
     inputs.forEach(input => {
@@ -87,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         input.addEventListener('input', function() {
+            // Clear error when user starts typing
             if (this.classList.contains('error')) {
                 validateField(this);
             }
@@ -162,54 +182,155 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update UI
         if (isValid) {
-            formGroup.classList.remove('has-error');
-            field.classList.remove('error');
+            hideError(field);
+            field.classList.add('success');
         } else {
-            formGroup.classList.add('has-error');
-            field.classList.add('error');
-            const errorElement = formGroup.querySelector('.error-message');
-            if (errorElement && errorMessage) {
-                errorElement.textContent = errorMessage;
-            }
+            showError(field, errorMessage);
         }
         
         return isValid;
     }
     
     /**
+     * Email validation
+     */
+    function validateEmail(input) {
+        const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!input.value.trim()) {
+            showError(input, 'Email is required');
+            return false;
+        }
+        if (!emailPattern.test(input.value)) {
+            showError(input, 'Please enter a valid email address');
+            return false;
+        }
+        hideError(input);
+        input.classList.add('success');
+        return true;
+    }
+    
+    /**
+     * Phone validation
+     */
+    function validatePhone(input) {
+        const phoneDigits = input.value.replace(/\D/g, '');
+        if (!input.value.trim()) {
+            showError(input, 'Phone number is required');
+            return false;
+        }
+        if (phoneDigits.length < 10) {
+            showError(input, 'Please enter a valid 10-digit phone number');
+            return false;
+        }
+        hideError(input);
+        input.classList.add('success');
+        return true;
+    }
+    
+    /**
+     * Account validation
+     */
+    function validateAccount(input) {
+        const accountPattern = /^\d{12}$/;
+        if (!input.value.trim()) {
+            showError(input, 'Account number is required');
+            return false;
+        }
+        if (!accountPattern.test(input.value)) {
+            showError(input, 'Account number must be exactly 12 digits');
+            return false;
+        }
+        hideError(input);
+        input.classList.add('success');
+        return true;
+    }
+    
+    /**
+     * SSN validation
+     */
+    function validateSSN(input) {
+        const ssnPattern = /^\d{4}$/;
+        if (!input.value.trim()) {
+            showError(input, 'Last 4 digits of SSN required');
+            return false;
+        }
+        if (!ssnPattern.test(input.value)) {
+            showError(input, 'Please enter exactly 4 digits');
+            return false;
+        }
+        hideError(input);
+        input.classList.add('success');
+        return true;
+    }
+    
+    /**
+     * Show error message
+     */
+    function showError(input, message) {
+        input.classList.add('error');
+        input.classList.remove('success');
+        
+        const formGroup = input.closest('.form-group');
+        if (formGroup) {
+            formGroup.classList.add('has-error');
+        }
+        
+        const errorElement = input.parentElement.querySelector('.error-message');
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+    }
+    
+    /**
+     * Hide error message
+     */
+    function hideError(input) {
+        input.classList.remove('error');
+        
+        const formGroup = input.closest('.form-group');
+        if (formGroup) {
+            formGroup.classList.remove('has-error');
+        }
+        
+        const errorElement = input.parentElement.querySelector('.error-message');
+        if (errorElement) {
+            errorElement.classList.remove('show');
+        }
+    }
+    
+    /**
      * Form submission
      */
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validate all fields
-            let isValid = true;
-            inputs.forEach(input => {
-                if (!validateField(input)) {
-                    isValid = false;
-                }
-            });
-            
-            if (isValid) {
-                // Show loading spinner
-                if (loadingSpinner) {
-                    loadingSpinner.classList.add('active');
-                }
-                
-                // Submit form
-                this.submit();
-            } else {
-                // Scroll to first error
-                const firstError = form.querySelector('.has-error');
-                if (firstError) {
-                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                
-                showToast('Please correct the errors in the form', 'error');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate all fields
+        let isValid = true;
+        inputs.forEach(input => {
+            if (!validateField(input)) {
+                isValid = false;
             }
         });
-    }
+        
+        if (isValid) {
+            // Show loading spinner
+            if (loadingSpinner) {
+                loadingSpinner.classList.add('active');
+            }
+            
+            // Submit form
+            this.submit();
+        } else {
+            // Scroll to first error
+            const firstError = form.querySelector('.has-error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            showToast('Please correct the errors in the form', 'error');
+        }
+    });
     
     /**
      * Show toast notification
@@ -237,204 +358,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-    
-    if (!form) return;
-    
-    // Email validation
-    const emailInput = document.getElementById('email');
-    if (emailInput) {
-        emailInput.addEventListener('blur', function() {
-            validateEmail(this);
-        });
-    }
-    
-    // Phone validation
-    const phoneInput = document.getElementById('phone');
-    if (phoneInput) {
-        phoneInput.addEventListener('blur', function() {
-            validatePhone(this);
-        });
-        
-        // Format phone number as user types
-        phoneInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9+\-\s()]/g, '');
-        });
-    }
-    
-    // Account number validation
-    const accountInput = document.getElementById('account_number');
-    if (accountInput) {
-        accountInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-        
-        accountInput.addEventListener('blur', function() {
-            validateAccount(this);
-        });
-    }
-    
-    // SSN validation
-    const ssnInput = document.getElementById('ssn');
-    if (ssnInput) {
-        ssnInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-        
-        ssnInput.addEventListener('blur', function() {
-            validateSSN(this);
-        });
-    }
-    
-    // ZIP code validation
-    const zipInput = document.getElementById('zip');
-    if (zipInput) {
-        zipInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9\-]/g, '');
-        });
-    }
-    
-    // Real-time validation for required fields
-    const requiredInputs = form.querySelectorAll('input[required]');
-    requiredInputs.forEach(function(input) {
-        input.addEventListener('blur', function() {
-            validateRequired(this);
-        });
-        
-        input.addEventListener('input', function() {
-            if (this.value.trim() !== '') {
-                this.classList.remove('error');
-                this.classList.add('success');
-                hideError(this);
-            }
-        });
-    });
-    
-    // Form submission validation
-    form.addEventListener('submit', function(e) {
-        let isValid = true;
-        
-        requiredInputs.forEach(function(input) {
-            if (!validateRequired(input)) {
-                isValid = false;
-            }
-        });
-        
-        if (emailInput && !validateEmail(emailInput)) {
-            isValid = false;
-        }
-        
-        if (phoneInput && !validatePhone(phoneInput)) {
-            isValid = false;
-        }
-        
-        if (accountInput && !validateAccount(accountInput)) {
-            isValid = false;
-        }
-        
-        if (ssnInput && !validateSSN(ssnInput)) {
-            isValid = false;
-        }
-        
-        if (!isValid) {
-            e.preventDefault();
-            // Scroll to first error
-            const firstError = form.querySelector('.error');
-            if (firstError) {
-                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-    });
-});
-
-// Validation functions
-function validateRequired(input) {
-    if (input.value.trim() === '') {
-        showError(input, 'This field is required');
-        return false;
-    }
-    hideError(input);
-    input.classList.add('success');
-    return true;
-}
-
-function validateEmail(input) {
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!input.value.trim()) {
-        showError(input, 'Email is required');
-        return false;
-    }
-    if (!emailPattern.test(input.value)) {
-        showError(input, 'Please enter a valid email address');
-        return false;
-    }
-    hideError(input);
-    input.classList.add('success');
-    return true;
-}
-
-function validatePhone(input) {
-    const phonePattern = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/;
-    if (!input.value.trim()) {
-        showError(input, 'Phone number is required');
-        return false;
-    }
-    if (!phonePattern.test(input.value.replace(/[\s\-\(\)]/g, ''))) {
-        showError(input, 'Please enter a valid phone number');
-        return false;
-    }
-    hideError(input);
-    input.classList.add('success');
-    return true;
-}
-
-function validateAccount(input) {
-    const accountPattern = /^\d{10,12}$/;
-    if (!input.value.trim()) {
-        showError(input, 'Account number is required');
-        return false;
-    }
-    if (!accountPattern.test(input.value)) {
-        showError(input, 'Account number must be 10-12 digits');
-        return false;
-    }
-    hideError(input);
-    input.classList.add('success');
-    return true;
-}
-
-function validateSSN(input) {
-    const ssnPattern = /^\d{4}$/;
-    if (!input.value.trim()) {
-        showError(input, 'Last 4 digits of SSN required');
-        return false;
-    }
-    if (!ssnPattern.test(input.value)) {
-        showError(input, 'Please enter exactly 4 digits');
-        return false;
-    }
-    hideError(input);
-    input.classList.add('success');
-    return true;
-}
-
-function showError(input, message) {
-    input.classList.add('error');
-    input.classList.remove('success');
-    
-    let errorElement = input.parentElement.querySelector('.error-message');
-    if (!errorElement) {
-        errorElement = document.createElement('span');
-        errorElement.className = 'error-message';
-        input.parentElement.appendChild(errorElement);
-    }
-    errorElement.textContent = message;
-    errorElement.classList.add('show');
-}
-
-function hideError(input) {
-    input.classList.remove('error');
-    const errorElement = input.parentElement.querySelector('.error-message');
-    if (errorElement) {
-        errorElement.classList.remove('show');
-    }
-}
