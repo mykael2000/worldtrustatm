@@ -357,10 +357,6 @@ select.success {
     display: block;  /* Only show when .show class is added */
 }
 
-.form-group.has-error .error-message {
-    display: block;
-}
-
 /* Info Text */
 .info-text {
     display: block;
