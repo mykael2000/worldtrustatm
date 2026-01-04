@@ -307,7 +307,7 @@ Copyright © 2024 WorldTrust Banking. All rights reserved.
 - Security features (encryption, CSRF, rate limiting)
 - Search, filter, and export functionality
 - Responsive design
-=======
+
 # World Trust ATM - Card Activation Website
 
 A professional, multi-page ATM card activation website built with PHP, HTML5, CSS3, and JavaScript. Features database integration, admin review panel, and a complete pending approval workflow.

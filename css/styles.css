@@ -6,9 +6,9 @@
 
 /* Reset and Base Styles */
 
-/* ============================================
+/* ==
    World Trust ATM - Professional Banking Styles
-   ============================================ */
+   == */
 
 :root {
     --primary-blue: #003d82;
@@ -151,7 +151,7 @@ body {
 }
 
 /* Form Styles */
-=======
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -296,7 +296,7 @@ body {
 /* Error Message */
 .error-message {
     color: var(--danger-color);
-=======
+
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;

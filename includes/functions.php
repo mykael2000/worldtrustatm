@@ -176,20 +176,11 @@ function validate_card_number($number) {
         return false;
     }
     
-    // Luhn algorithm
+    // Luhn algorith
 
- */
-function validate_email($email) {
-    return preg_match(EMAIL_PATTERN, $email);
 }
 
-/**
- * Validate phone number
- */
-function validate_phone($phone) {
-    $phone = preg_replace('/[^0-9+]/', '', $phone);
-    return preg_match(PHONE_PATTERN, $phone);
-}
+
 
 /**
  * Validate account number
@@ -203,43 +194,6 @@ function validate_account($account) {
  */
 function validate_ssn($ssn) {
     return preg_match(SSN_PATTERN, $ssn);
-}
-
-/**
- * Validate card number using Luhn algorithm
- */
-function validate_card_number($number) {
-    $number = preg_replace('/[^0-9]/', '', $number);
-    if (strlen($number) != 16) {
-        return false;
-    }
-    
-
-    $sum = 0;
-    $numDigits = strlen($number);
-    $parity = $numDigits % 2;
-    
-    for ($i = 0; $i < $numDigits; $i++) {
-
-        $digit = (int)$number[$i];
-        if ($i % 2 == $parity) {
-            $digit *= 2;
-            if ($digit > 9) {
-                $digit -= 9;
-            }
-
-        $digit = intval($number[$i]);
-        if ($i % 2 == $parity) {
-            $digit *= 2;
-        }
-        if ($digit > 9) {
-            $digit -= 9;
-
-        }
-        $sum += $digit;
-    }
-    
-    return ($sum % 10) == 0;
 }
 
 /**
@@ -393,8 +347,8 @@ function mask_card_number($cardNumber) {
     }
     return '****';
 
- * Validate CVV
- */
+}
+
 function validate_cvv($cvv) {
     return preg_match('/^\d{3}$/', $cvv);
 }
@@ -465,12 +419,6 @@ function generate_cvv() {
     return str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
 }
 
-/**
- * Format currency
- */
-function format_currency($amount) {
-    return '$' . number_format($amount, 2);
-}
 
 /**
  * Get user's full name

@@ -2,7 +2,7 @@
 /**
 
  * ATM Card Activation - Step 1: Personal & Account Information
-=======
+
  * World Trust ATM - Card Activation
  * Page 1: Basic Details Collection
 

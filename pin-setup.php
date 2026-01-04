@@ -2,7 +2,7 @@
 /**
 
  * ATM Card Activation - Step 3: PIN Setup & Completion
-=======
+
  * World Trust ATM - Card Activation
  * Page 3: PIN Setup & Card Details
 

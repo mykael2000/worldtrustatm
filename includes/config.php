@@ -3,7 +3,7 @@
 
  * Application Configuration
  * Global configuration settings
-=======
+
  * World Trust ATM - Configuration File
  * This file contains configuration settings for the application
 
@@ -88,11 +88,9 @@ function regenerateSession() {
 }
 
 // Application settings
-define('APP_NAME', 'World Trust ATM');
+
 define('APP_TAGLINE', 'Your Trust, Our Priority');
 
-// Security settings
-define('SESSION_TIMEOUT', 1800); // 30 minutes in seconds
 
 // Card settings
 define('CARD_PREFIX', '4532'); // Visa-like prefix
