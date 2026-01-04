@@ -47,3 +47,12 @@ session_destroy();
 // Redirect to login page
 set_flash('success', 'You have been successfully logged out.');
 redirect('/admin/login.php');
+=======
+ * World Trust ATM - Admin Logout
+ */
+
+session_start();
+session_destroy();
+header('Location: index.php');
+exit();
+
