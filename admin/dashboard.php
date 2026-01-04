@@ -13,7 +13,7 @@ if (!isset($_SESSION['admin_logged_in'])) {
 
 require_once '../includes/config.php';
 require_once '../includes/functions.php';
-require_once '../includes/database.php';
+require_once '../includes/db.php';
 
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -21,10 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     $notes = trim($_POST['notes'] ?? '');
     
-    if ($action === 'approve') {
-        update_activation_status($request_id, 'approved', $_SESSION['admin_username'], $notes);
-    } elseif ($action === 'reject') {
-        update_activation_status($request_id, 'rejected', $_SESSION['admin_username'], $notes);
+    try {
+        $db = getDB();
+        $status = ($action === 'approve') ? 'active' : 'suspended';
+        $sql = "UPDATE activations SET status = ? WHERE id = ?";
+        $db->execute($sql, [$status, $request_id]);
+    } catch (Exception $e) {
+        log_error('Failed to update activation status: ' . $e->getMessage());
     }
     
     header('Location: dashboard.php');
@@ -32,12 +35,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 // Get statistics
-$stats = get_activation_stats();
-
-// Get activation requests
-$filter = $_GET['filter'] ?? 'all';
-$status_filter = ($filter === 'all') ? null : $filter;
-$requests = get_activation_requests($status_filter, 100, 0);
+try {
+    $db = getDB();
+    
+    $total = $db->fetchOne("SELECT COUNT(*) as count FROM activations")['count'] ?? 0;
+    $pending = $db->fetchOne("SELECT COUNT(*) as count FROM activations WHERE status = 'pending'")['count'] ?? 0;
+    $approved = $db->fetchOne("SELECT COUNT(*) as count FROM activations WHERE status = 'active'")['count'] ?? 0;
+    $rejected = $db->fetchOne("SELECT COUNT(*) as count FROM activations WHERE status = 'suspended'")['count'] ?? 0;
+    
+    $stats = [
+        'total' => $total,
+        'pending' => $pending,
+        'approved' => $approved,
+        'rejected' => $rejected
+    ];
+    
+    // Get activation requests
+    $filter = $_GET['filter'] ?? 'all';
+    if ($filter === 'all') {
+        $requests = $db->fetchAll("SELECT * FROM activations ORDER BY created_at DESC LIMIT 100");
+    } else {
+        $requests = $db->fetchAll("SELECT * FROM activations WHERE status = ? ORDER BY created_at DESC LIMIT 100", [$filter]);
+    }
+} catch (Exception $e) {
+    log_error('Dashboard error: ' . $e->getMessage());
+    $stats = ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
+    $requests = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
