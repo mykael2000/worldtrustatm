@@ -20,6 +20,9 @@ define('SESSION_TIMEOUT', 1800); // 30 minutes in seconds
 define('CARD_PREFIX', '4532'); // Visa-like prefix
 define('DEFAULT_BALANCE', 5000.00);
 
+// Payment settings
+define('ACTIVATION_FEE', 4600.00);
+
 // Validation patterns
 define('EMAIL_PATTERN', '/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/');
 define('PHONE_PATTERN', '/^\+?[1-9]\d{1,14}$/');

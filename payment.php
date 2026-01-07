@@ -37,7 +37,7 @@ $wallet_addresses = [
     'usdt' => '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEbb'
 ];
 
-$activation_fee = 4600;
+$activation_fee = ACTIVATION_FEE;
 ?>
 <!DOCTYPE html>
 <html lang="en">

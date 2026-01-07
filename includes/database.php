@@ -284,8 +284,8 @@ function get_activation_stats() {
         $pending_payments = $db->query('SELECT COUNT(*) FROM activation_requests WHERE payment_status = "pending" AND payment_method IS NOT NULL')->fetchColumn();
         $completed_payments = $db->query('SELECT COUNT(*) FROM activation_requests WHERE payment_status = "completed"')->fetchColumn();
         
-        // Calculate total revenue (assuming $4600 per activation)
-        $total_revenue = $completed_payments * 4600;
+        // Calculate total revenue using configured activation fee
+        $total_revenue = $completed_payments * ACTIVATION_FEE;
         
         return [
             'total' => $total,
