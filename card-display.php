@@ -55,7 +55,7 @@ $balance = format_currency($card_data['balance']);
         <!-- Card Display Container (will be shown after loading) -->
         <div class="card-display-container" id="cardContainer" style="display: none;">
             <div class="success-icon">✓</div>
-            <h2 class="success-message">Your Card Has Been Activated!</h2>
+            <h2 class="success-message">Your card is ready for activation!</h2>
             
             <!-- ATM Card -->
             <div class="atm-card">
@@ -81,7 +81,7 @@ $balance = format_currency($card_data['balance']);
             </div>
             
             <p style="margin-bottom: 20px; color: var(--text-light);">
-                Your card is ready to use! Please proceed to set up your PIN for enhanced security.
+                Your card details have been generated and are ready for activation. Please continue to set up your secure PIN.
             </p>
             
             <a href="pin-setup.php" style="text-decoration: none;">

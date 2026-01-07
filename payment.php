@@ -6,6 +6,7 @@
 
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
+require_once 'includes/database.php';
 
 // Check session
 check_user_session();
@@ -13,6 +14,21 @@ check_session_timeout();
 
 $user_name = get_full_name();
 $request_id = $_SESSION['request_id'] ?? null;
+
+// Handle payment method selection
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
+    $payment_method = sanitize_input($_POST['payment_method']);
+    $payment_address = sanitize_input($_POST['payment_address'] ?? '');
+    
+    if ($request_id && in_array($payment_method, ['btc', 'eth', 'usdt'])) {
+        // Save payment method to database
+        update_payment_info($request_id, $payment_method, $payment_address);
+        
+        // Redirect to pending page
+        header('Location: pending.php');
+        exit();
+    }
+}
 
 // Cryptocurrency wallet addresses (placeholders)
 $wallet_addresses = [

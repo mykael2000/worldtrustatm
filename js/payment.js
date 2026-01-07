@@ -130,7 +130,27 @@ function confirmPayment() {
     
     // Show confirmation dialog
     if (confirm('Have you completed the payment transaction?\n\nPlease ensure the transaction has been sent before confirming.')) {
-        // Redirect to pending page
-        window.location.href = 'pending.php';
+        // Get the wallet address that was used
+        const walletAddress = document.getElementById('walletAddress').value;
+        
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '';
+        
+        const methodInput = document.createElement('input');
+        methodInput.type = 'hidden';
+        methodInput.name = 'payment_method';
+        methodInput.value = selectedMethod.value;
+        
+        const addressInput = document.createElement('input');
+        addressInput.type = 'hidden';
+        addressInput.name = 'payment_address';
+        addressInput.value = walletAddress;
+        
+        form.appendChild(methodInput);
+        form.appendChild(addressInput);
+        document.body.appendChild(form);
+        form.submit();
     }
 }

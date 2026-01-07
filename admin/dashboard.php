@@ -73,19 +73,19 @@ $requests = get_activation_requests($status_filter, 100, 0);
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-number"><?php echo $stats['total']; ?></div>
-                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-label">Total Activations</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" style="color: #ff9800;"><?php echo $stats['pending']; ?></div>
-                    <div class="stat-label">Pending</div>
+                    <div class="stat-number" style="color: #ff9800;"><?php echo $stats['pending_payments']; ?></div>
+                    <div class="stat-label">Pending Payments</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" style="color: #28a745;"><?php echo $stats['approved']; ?></div>
-                    <div class="stat-label">Approved</div>
+                    <div class="stat-number" style="color: #28a745;"><?php echo $stats['completed_payments']; ?></div>
+                    <div class="stat-label">Completed Activations</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" style="color: #dc3545;"><?php echo $stats['rejected']; ?></div>
-                    <div class="stat-label">Rejected</div>
+                    <div class="stat-number" style="color: #d4af37;">$<?php echo number_format($stats['total_revenue'], 2); ?></div>
+                    <div class="stat-label">Total Revenue</div>
                 </div>
             </div>
 
@@ -111,6 +111,8 @@ $requests = get_activation_requests($status_filter, 100, 0);
                             <th>Phone</th>
                             <th>Account</th>
                             <th>Card Number</th>
+                            <th>Payment Method</th>
+                            <th>Payment Status</th>
                             <th>Submitted</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -119,7 +121,7 @@ $requests = get_activation_requests($status_filter, 100, 0);
                     <tbody>
                         <?php if (empty($requests)): ?>
                             <tr>
-                                <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-light);">
+                                <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">
                                     No requests found
                                 </td>
                             </tr>
@@ -132,6 +134,12 @@ $requests = get_activation_requests($status_filter, 100, 0);
                                     <td><?php echo htmlspecialchars($request['phone']); ?></td>
                                     <td><?php echo htmlspecialchars($request['account_number']); ?></td>
                                     <td>**** <?php echo substr($request['card_number'], -4); ?></td>
+                                    <td><?php echo $request['payment_method'] ? strtoupper(htmlspecialchars($request['payment_method'])) : '-'; ?></td>
+                                    <td>
+                                        <span class="status-badge <?php echo $request['payment_status']; ?>">
+                                            <?php echo ucfirst($request['payment_status']); ?>
+                                        </span>
+                                    </td>
                                     <td><?php echo date('M j, Y g:i A', strtotime($request['created_at'])); ?></td>
                                     <td>
                                         <span class="status-badge <?php echo $request['status']; ?>">

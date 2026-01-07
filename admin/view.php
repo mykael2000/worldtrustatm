@@ -32,9 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         update_activation_status($request_id, 'approved', $_SESSION['admin_username'], $notes);
     } elseif ($action === 'reject') {
         update_activation_status($request_id, 'rejected', $_SESSION['admin_username'], $notes);
+    } elseif ($action === 'verify_payment') {
+        update_payment_status($request_id, 'completed');
     }
     
-    header('Location: dashboard.php');
+    // Reload the page to show updated data
+    header('Location: view.php?id=' . $request_id);
     exit();
 }
 ?>
@@ -138,12 +141,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     <span class="info-label">Balance:</span>
                     <span class="info-value"><?php echo format_currency($request['balance']); ?></span>
                 </div>
+                <div class="info-item">
+                    <span class="info-label">PIN:</span>
+                    <span class="info-value"><?php echo !empty($request['pin_hash']) ? 'Set (Hashed)' : 'Not Set'; ?></span>
+                </div>
+            </div>
+
+            <h3 class="section-title" style="margin-top: 30px;">Payment Information</h3>
+            <div class="info-box">
+                <div class="info-item">
+                    <span class="info-label">Payment Method:</span>
+                    <span class="info-value"><?php echo $request['payment_method'] ? strtoupper(htmlspecialchars($request['payment_method'])) : 'Not Selected'; ?></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Payment Status:</span>
+                    <span class="status-badge <?php echo $request['payment_status']; ?>"><?php echo ucfirst($request['payment_status']); ?></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Payment Address:</span>
+                    <span class="info-value" style="font-size: 12px; word-break: break-all;"><?php echo $request['payment_address'] ? htmlspecialchars($request['payment_address']) : 'N/A'; ?></span>
+                </div>
             </div>
 
             <?php if ($request['admin_notes']): ?>
             <h3 class="section-title" style="margin-top: 30px;">Admin Notes</h3>
             <div class="alert-box">
                 <p><?php echo nl2br(htmlspecialchars($request['admin_notes'])); ?></p>
+            </div>
+            <?php endif; ?>
+
+            <!-- Payment Verification -->
+            <?php if ($request['payment_method'] && $request['payment_status'] === 'pending'): ?>
+            <div style="margin-top: 30px;">
+                <h3 class="section-title">Payment Verification</h3>
+                <form method="POST">
+                    <button type="submit" name="action" value="verify_payment" class="btn btn-primary" style="background: var(--success-green); width: auto;" onclick="return confirm('Mark this payment as verified and completed?')">
+                        ✓ Mark Payment as Completed
+                    </button>
+                </form>
             </div>
             <?php endif; ?>
 
