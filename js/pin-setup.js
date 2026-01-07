@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!form) return;
     
     // Card number formatting and validation
-    const cardNumberInput = document.getElementById('card_number');
+    const cardNumberInput = document.getElementById('details');
     if (cardNumberInput) {
         cardNumberInput.addEventListener('input', function() {
             // Remove non-digits

