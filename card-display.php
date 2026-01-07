@@ -6,10 +6,30 @@
 
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
+require_once 'includes/database.php';
 
 // Check if user data exists in session
 check_user_session();
 check_session_timeout();
+
+// Handle activation PIN verification
+$pin_error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_activation_pin'])) {
+    $activation_pin = sanitize_input($_POST['activation_pin'] ?? '');
+    
+    if (empty($activation_pin)) {
+        $pin_error = 'Please enter the activation PIN.';
+    } elseif (!validate_activation_pin($activation_pin)) {
+        $pin_error = 'Activation PIN must be exactly 6 digits.';
+    } elseif (verify_activation_pin($activation_pin)) {
+        // PIN is correct, set session flag and redirect to PIN setup
+        $_SESSION['activation_pin_verified'] = true;
+        header('Location: pin-setup.php');
+        exit();
+    } else {
+        $pin_error = 'Invalid activation PIN. Please contact support.';
+    }
+}
 
 // Generate card data if not exists
 if (!isset($_SESSION['card_data'])) {
@@ -25,6 +45,9 @@ $card_data = $_SESSION['card_data'];
 $user_name = get_full_name();
 $card_number_masked = format_card_number_masked($card_data['card_number']);
 $balance = format_currency($card_data['balance']);
+
+// Check if PIN is already verified
+$pin_verified = isset($_SESSION['activation_pin_verified']) && $_SESSION['activation_pin_verified'] === true;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -84,9 +107,37 @@ $balance = format_currency($card_data['balance']);
                 Your card details have been generated and are ready for activation. Please continue to set up your secure PIN.
             </p>
             
-            <a href="pin-setup.php" style="text-decoration: none;">
-                <button class="btn btn-primary">Continue to PIN Setup</button>
-            </a>
+            <?php if (!$pin_verified): ?>
+                <!-- Activation PIN Section -->
+                <div class="activation-pin-section">
+                    <h3 class="section-title">Enter Activation PIN</h3>
+                    <p class="instruction-text">
+                        Please enter your 6-digit activation PIN to proceed with card activation.
+                        Contact our support team if you haven't received your PIN.
+                    </p>
+                    
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label for="activation_pin">Activation PIN <span class="required">*</span></label>
+                            <div class="pin-input-wrapper">
+                                <input type="password" id="activation_pin" name="activation_pin" 
+                                       maxlength="6" placeholder="Enter 6-digit PIN" required>
+                                <button type="button" class="toggle-pin-view" onclick="toggleActivationPin()">👁️</button>
+                            </div>
+                            <?php if (!empty($pin_error)): ?>
+                                <span class="error-message show"><?php echo htmlspecialchars($pin_error); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <button type="submit" name="verify_activation_pin" class="btn btn-primary">
+                            Verify & Continue
+                        </button>
+                    </form>
+                </div>
+            <?php else: ?>
+                <a href="pin-setup.php" style="text-decoration: none;">
+                    <button class="btn btn-primary">Continue to PIN Setup</button>
+                </a>
+            <?php endif; ?>
         </div>
         
         <!-- Disclaimer -->
@@ -97,5 +148,20 @@ $balance = format_currency($card_data['balance']);
     </div>
     
     <script src="js/card-display.js"></script>
+    <script>
+        // Toggle activation PIN visibility
+        function toggleActivationPin() {
+            const pinInput = document.getElementById('activation_pin');
+            const toggleBtn = document.querySelector('.toggle-pin-view');
+            
+            if (pinInput.type === 'password') {
+                pinInput.type = 'text';
+                toggleBtn.textContent = '🔒';
+            } else {
+                pinInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+    </script>
 </body>
 </html>

@@ -78,6 +78,16 @@ function create_tables($db) {
         INDEX idx_username (username)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
     
+    // System settings table
+    $db->exec('CREATE TABLE IF NOT EXISTS system_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        setting_key VARCHAR(100) UNIQUE NOT NULL,
+        setting_value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        updated_by VARCHAR(100) DEFAULT NULL,
+        INDEX idx_setting_key (setting_key)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+    
     // Create default admin user if not exists
     $stmt = $db->prepare('SELECT COUNT(*) FROM admin_users WHERE username = ?');
     $stmt->execute(['admin']);
@@ -87,6 +97,15 @@ function create_tables($db) {
         $stmt = $db->prepare('INSERT INTO admin_users (username, password_hash, full_name, email, role) 
                               VALUES (?, ?, ?, ?, ?)');
         $stmt->execute(['admin', $password_hash, 'System Administrator', 'admin@worldtrustatm.com', 'admin']);
+    }
+    
+    // Create default activation PIN setting if not exists
+    $stmt = $db->prepare('SELECT COUNT(*) FROM system_settings WHERE setting_key = ?');
+    $stmt->execute(['activation_pin']);
+    if ($stmt->fetchColumn() == 0) {
+        $stmt = $db->prepare('INSERT INTO system_settings (setting_key, setting_value, updated_by) 
+                              VALUES (?, ?, ?)');
+        $stmt->execute(['activation_pin', '123456', 'system']);
     }
 }
 
@@ -299,5 +318,64 @@ function get_activation_stats() {
     } catch (PDOException $e) {
         error_log('Failed to get stats: ' . $e->getMessage());
         return ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0, 'pending_payments' => 0, 'completed_payments' => 0, 'total_revenue' => 0];
+    }
+}
+
+/**
+ * Get system setting by key
+ */
+function get_system_setting($key, $default = null) {
+    $db = get_db_connection();
+    if (!$db) {
+        return $default;
+    }
+    
+    try {
+        $stmt = $db->prepare('SELECT setting_value FROM system_settings WHERE setting_key = ?');
+        $stmt->execute([$key]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['setting_value'] : $default;
+    } catch (PDOException $e) {
+        error_log('Failed to get system setting: ' . $e->getMessage());
+        return $default;
+    }
+}
+
+/**
+ * Update system setting
+ */
+function update_system_setting($key, $value, $updated_by = null) {
+    $db = get_db_connection();
+    if (!$db) {
+        return false;
+    }
+    
+    try {
+        $stmt = $db->prepare('INSERT INTO system_settings (setting_key, setting_value, updated_by) 
+                              VALUES (?, ?, ?) 
+                              ON DUPLICATE KEY UPDATE setting_value = ?, updated_by = ?');
+        return $stmt->execute([$key, $value, $updated_by, $value, $updated_by]);
+    } catch (PDOException $e) {
+        error_log('Failed to update system setting: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get system setting with metadata
+ */
+function get_system_setting_with_metadata($key) {
+    $db = get_db_connection();
+    if (!$db) {
+        return null;
+    }
+    
+    try {
+        $stmt = $db->prepare('SELECT * FROM system_settings WHERE setting_key = ?');
+        $stmt->execute([$key]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log('Failed to get system setting with metadata: ' . $e->getMessage());
+        return null;
     }
 }

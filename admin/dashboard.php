@@ -64,7 +64,10 @@ $requests = get_activation_requests($status_filter, 100, 0);
                     <h1 class="logo"><?php echo APP_NAME; ?></h1>
                     <p class="tagline">Admin Dashboard - <?php echo htmlspecialchars($_SESSION['admin_name']); ?></p>
                 </div>
-                <a href="logout.php" class="logout-btn">Logout</a>
+                <div style="display: flex; gap: 10px;">
+                    <a href="settings.php" class="logout-btn" style="background: var(--secondary-blue);">⚙️ Settings</a>
+                    <a href="logout.php" class="logout-btn">Logout</a>
+                </div>
             </div>
         </header>
 

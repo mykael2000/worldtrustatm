@@ -8,6 +8,12 @@ require_once 'includes/config.php';
 require_once 'includes/functions.php';
 require_once 'includes/database.php';
 
+// Check if activation PIN was verified
+if (!isset($_SESSION['activation_pin_verified']) || $_SESSION['activation_pin_verified'] !== true) {
+    header('Location: card-display.php');
+    exit();
+}
+
 // Check session
 check_user_session();
 check_card_session();
