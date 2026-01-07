@@ -143,7 +143,7 @@ function save_activation_request($user_data, $card_data, $pin_hash) {
             $card_data['cvv'],
             $card_data['expiry_date'],
             $pin_hash,
-            1, // activation_pin_verified - set to 1 since user has verified the activation PIN
+            1, // Set to 1 - user reached this point only after verifying activation PIN (enforced by session check in pin-setup.php)
             $card_data['balance'],
             'pending'
         ]);
