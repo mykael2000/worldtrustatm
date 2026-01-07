@@ -106,9 +106,13 @@ $updated_by = $pin_data ? $pin_data['updated_by'] : 'system';
                 </div>
                 
                 <div class="last-updated">
-                    Last Updated: <?php echo date('M j, Y g:i A', strtotime($last_updated)); ?>
-                    <?php if ($updated_by): ?>
-                        by <strong><?php echo htmlspecialchars($updated_by); ?></strong>
+                    <?php if ($last_updated && $last_updated !== 'Never'): ?>
+                        Last Updated: <?php echo date('M j, Y g:i A', strtotime($last_updated)); ?>
+                        <?php if ($updated_by): ?>
+                            by <strong><?php echo htmlspecialchars($updated_by); ?></strong>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        Last Updated: <strong>Never</strong>
                     <?php endif; ?>
                 </div>
                 
