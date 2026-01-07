@@ -71,12 +71,38 @@ function copyAddress() {
     const copyMessage = document.getElementById('copyMessage');
     const copyBtn = document.getElementById('copyBtn');
     
-    // Select and copy the text
+    // Select the text
     walletAddressInput.select();
     walletAddressInput.setSelectionRange(0, 99999); // For mobile devices
     
-    // Copy to clipboard
-    navigator.clipboard.writeText(walletAddressInput.value).then(function() {
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(walletAddressInput.value).then(function() {
+            showCopySuccess();
+        }).catch(function(err) {
+            // Fallback to execCommand
+            fallbackCopy();
+        });
+    } else {
+        // Use fallback for older browsers or HTTP
+        fallbackCopy();
+    }
+    
+    function fallbackCopy() {
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccess();
+            } else {
+                alert('Failed to copy address. Please copy manually.');
+            }
+        } catch (err) {
+            console.error('Fallback copy failed: ', err);
+            alert('Failed to copy address. Please copy manually.');
+        }
+    }
+    
+    function showCopySuccess() {
         // Show success message
         copyMessage.style.display = 'block';
         copyBtn.textContent = '✓ Copied!';
@@ -88,10 +114,7 @@ function copyAddress() {
             copyBtn.textContent = '📋 Copy';
             copyBtn.style.background = '';
         }, 2000);
-    }).catch(function(err) {
-        console.error('Failed to copy text: ', err);
-        alert('Failed to copy address. Please copy manually.');
-    });
+    }
 }
 
 /**

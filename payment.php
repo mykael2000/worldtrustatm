@@ -17,8 +17,8 @@ $request_id = $_SESSION['request_id'] ?? null;
 // Cryptocurrency wallet addresses (placeholders)
 $wallet_addresses = [
     'btc' => 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    'eth' => '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-    'usdt' => '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb'
+    'eth' => '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEbb',
+    'usdt' => '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEbb'
 ];
 
 $activation_fee = 4600;
