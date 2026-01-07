@@ -1,4 +1,7 @@
-database/
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+!database/schema.sql
 *.db
 *.sqlite
 *.sqlite3
