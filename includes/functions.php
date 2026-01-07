@@ -180,3 +180,33 @@ function check_card_session() {
         exit();
     }
 }
+
+/**
+ * Get activation PIN from database
+ */
+function get_activation_pin() {
+    $pin = get_system_setting('activation_pin', '123456');
+    return $pin;
+}
+
+/**
+ * Verify activation PIN
+ */
+function verify_activation_pin($pin) {
+    $correct_pin = get_activation_pin();
+    return $pin === $correct_pin;
+}
+
+/**
+ * Update activation PIN
+ */
+function update_activation_pin($new_pin, $admin_username) {
+    return update_system_setting('activation_pin', $new_pin, $admin_username);
+}
+
+/**
+ * Validate activation PIN format (6 digits)
+ */
+function validate_activation_pin($pin) {
+    return preg_match('/^\d{6}$/', $pin);
+}
