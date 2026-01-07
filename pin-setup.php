@@ -72,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Store request ID in session
             $_SESSION['request_id'] = $request_id;
             
-            // Redirect to pending page
-            header('Location: pending.php');
+            // Redirect to payment page
+            header('Location: payment.php');
             exit();
         } else {
             $errors['general'] = 'Failed to submit activation request. Please try again.';
