@@ -64,7 +64,12 @@ $requests = get_activation_requests($status_filter, 100, 0);
                     <h1 class="logo"><?php echo APP_NAME; ?></h1>
                     <p class="tagline">Admin Dashboard - <?php echo htmlspecialchars($_SESSION['admin_name']); ?></p>
                 </div>
-                <a href="logout.php" class="logout-btn">Logout</a>
+                <div style="display: flex; gap: 10px;">
+                    <a href="set-activation-pin.php" class="btn btn-primary" style="width: auto; padding: 10px 20px;">
+                        🔑 Set Activation PINs
+                    </a>
+                    <a href="logout.php" class="logout-btn">Logout</a>
+                </div>
             </div>
         </header>
 
@@ -115,13 +120,14 @@ $requests = get_activation_requests($status_filter, 100, 0);
                             <th>Payment Status</th>
                             <th>Submitted</th>
                             <th>Status</th>
+                            <th>Activation</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($requests)): ?>
                             <tr>
-                                <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-light);">
+                                <td colspan="12" style="text-align: center; padding: 40px; color: var(--text-light);">
                                     No requests found
                                 </td>
                             </tr>
