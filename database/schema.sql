@@ -25,6 +25,9 @@ CREATE TABLE IF NOT EXISTS activation_requests (
     payment_status VARCHAR(20) DEFAULT 'pending',
     payment_address VARCHAR(255) DEFAULT NULL,
     activation_pin VARCHAR(6) DEFAULT NULL,
+    activation_token VARCHAR(64) UNIQUE DEFAULT NULL,
+    pin_sent_at TIMESTAMP NULL,
+    pin_sent_by VARCHAR(50) DEFAULT NULL,
     status VARCHAR(20) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -34,7 +37,8 @@ CREATE TABLE IF NOT EXISTS activation_requests (
     admin_notes TEXT DEFAULT NULL,
     INDEX idx_email (email),
     INDEX idx_status (status),
-    INDEX idx_payment_status (payment_status)
+    INDEX idx_payment_status (payment_status),
+    INDEX idx_activation_token (activation_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Admin users table

@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_activation_pin
         <div class="activation-verify-container">
             <div class="success-icon">✓</div>
             <h2 class="form-title">Payment Received!</h2>
-            <p class="form-subtitle">Enter your activation PIN to complete the process</p>
+            <p class="form-subtitle">Your card activation is being processed</p>
             
             <div class="info-box">
                 <div class="info-item">
@@ -78,6 +78,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_activation_pin
                     <span class="info-label">Payment Status:</span>
                     <span class="info-value status-confirmed">Confirmed</span>
                 </div>
+            </div>
+            
+            <div class="alert-box" style="background: #fff3cd; border: 1px solid #ffc107; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #856404; margin-bottom: 15px; font-size: 16px;">📧 Activation PIN Will Be Sent to Your Email</h3>
+                <p style="color: #856404; margin-bottom: 10px;">
+                    Once we receive blockchain confirmation, we will send you an email containing:
+                </p>
+                <ul style="margin: 10px 0; padding-left: 20px; color: #856404;">
+                    <li><strong>6-digit Activation PIN</strong></li>
+                    <li><strong>Unique activation link</strong></li>
+                </ul>
+                <p style="margin-top: 15px; color: #856404;">
+                    Click the link in the email and enter your PIN to complete activation.
+                    The email will be sent to: <strong><?php echo htmlspecialchars($_SESSION['user_data']['email'] ?? 'your email'); ?></strong>
+                </p>
             </div>
             
             <div class="activation-pin-section">
