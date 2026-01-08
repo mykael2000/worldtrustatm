@@ -180,3 +180,38 @@ function check_card_session() {
         exit();
     }
 }
+
+/**
+ * Verify activation PIN
+ * For demo purposes, this accepts any 6-digit PIN
+ * In production, this should verify against admin-set PINs
+ */
+function verify_activation_pin($request_id, $activation_pin) {
+    // For demo: accept any valid 6-digit PIN
+    // In production, verify against database or admin system
+    return preg_match('/^\d{6}$/', $activation_pin);
+}
+
+/**
+ * Update activation status after PIN verification
+ */
+function update_activation_status_with_pin($request_id, $status, $activation_pin) {
+    $db = get_db_connection();
+    if (!$db) {
+        return false;
+    }
+    
+    try {
+        $stmt = $db->prepare("
+            UPDATE activation_requests 
+            SET status = ?, 
+                activation_pin = ?,
+                activated_at = NOW()
+            WHERE id = ?
+        ");
+        return $stmt->execute([$status, $activation_pin, $request_id]);
+    } catch (PDOException $e) {
+        error_log('Failed to update activation status: ' . $e->getMessage());
+        return false;
+    }
+}

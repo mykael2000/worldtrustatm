@@ -8,9 +8,15 @@ require_once 'includes/config.php';
 require_once 'includes/functions.php';
 require_once 'includes/database.php';
 
-// Check session
+// Check session - must have come from card-display.php
 check_user_session();
 check_session_timeout();
+
+// Check if card details exist (must have completed pin-setup and card-display)
+if (!isset($_SESSION['card_number'])) {
+    header('Location: card-display.php');
+    exit();
+}
 
 $user_name = get_full_name();
 $request_id = $_SESSION['request_id'] ?? null;
@@ -24,8 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
         // Save payment method to database
         update_payment_info($request_id, $payment_method, $payment_address);
         
-        // Redirect to pending page
-        header('Location: pending.php');
+        // Set session flag for payment confirmation
+        $_SESSION['payment_confirmed'] = true;
+        
+        // Redirect to activation PIN verification page
+        header('Location: activation-verify.php');
         exit();
     }
 }

