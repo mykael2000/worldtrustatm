@@ -24,7 +24,8 @@ if (!$pdo) {
 $stmt = $pdo->query("
     SELECT id, first_name, last_name, email, payment_method, payment_status, status, created_at 
     FROM activation_requests 
-    WHERE payment_status = 'pending' OR status != 'activated'
+    WHERE (payment_status = 'pending' AND payment_method IS NOT NULL) 
+       OR (payment_status = 'completed' AND status != 'activated')
     ORDER BY created_at DESC
 ");
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -343,32 +344,50 @@ if (isset($_GET['user_id'])) {
     <script>
         function togglePinInput() {
             const customRadio = document.querySelector('input[value="custom"]');
+            const autoRadio = document.querySelector('input[value="auto"]');
             const customInput = document.getElementById('custom_pin');
             const submitBtn = document.getElementById('setPinBtn');
-            const autoGenCheckbox = document.querySelector('input[name="auto_generate"]');
             
             if (customRadio.checked) {
                 customInput.disabled = false;
                 customInput.required = true;
                 submitBtn.textContent = 'Set Custom PIN & Send';
-                if (autoGenCheckbox) autoGenCheckbox.checked = false;
             } else {
                 customInput.disabled = true;
                 customInput.required = false;
                 customInput.value = '';
                 submitBtn.textContent = 'Generate & Send PIN';
-                if (autoGenCheckbox) autoGenCheckbox.checked = true;
             }
         }
         
-        // Add hidden checkbox for auto-generate
+        // Initialize the form on page load
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('.pin-form');
-            const autoCheckbox = document.createElement('input');
-            autoCheckbox.type = 'hidden';
-            autoCheckbox.name = 'auto_generate';
-            autoCheckbox.value = '1';
-            form.appendChild(autoCheckbox);
+            if (form) {
+                // Create hidden input for auto-generate flag
+                const autoInput = document.createElement('input');
+                autoInput.type = 'hidden';
+                autoInput.name = 'auto_generate';
+                autoInput.id = 'auto_generate_input';
+                form.appendChild(autoInput);
+                
+                // Set initial value based on selected radio
+                const autoRadio = document.querySelector('input[value="auto"]');
+                if (autoRadio && autoRadio.checked) {
+                    autoInput.value = '1';
+                }
+                
+                // Update hidden input when radio changes
+                const radios = document.querySelectorAll('input[name="pin_type"]');
+                radios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        const autoGenInput = document.getElementById('auto_generate_input');
+                        if (autoGenInput) {
+                            autoGenInput.value = this.value === 'auto' ? '1' : '';
+                        }
+                    });
+                });
+            }
         });
     </script>
 </body>
