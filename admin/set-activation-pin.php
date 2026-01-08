@@ -21,6 +21,10 @@ if (!$pdo) {
     die('Database connection failed');
 }
 
+// Get all users who have submitted payment info but haven't been activated
+// This includes:
+// - Users with pending payment status who have selected a payment method (awaiting payment)
+// - Users with completed payment but not yet activated (awaiting PIN/activation)
 $stmt = $pdo->query("
     SELECT id, first_name, last_name, email, payment_method, payment_status, status, created_at 
     FROM activation_requests 
@@ -46,7 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_pin'])) {
     } else {
         // Generate or use custom PIN
         if ($auto_generate) {
-            $activation_pin = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            // Generate 6-digit PIN (100000-999999) to avoid leading zeros
+            $activation_pin = (string) random_int(100000, 999999);
         } else {
             // Validate custom PIN
             if (!preg_match('/^\d{6}$/', $custom_pin)) {

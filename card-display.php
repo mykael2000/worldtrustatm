@@ -183,7 +183,7 @@ $balance_formatted = format_currency($balance);
                     <div class="info-grid">
                         <div class="info-row">
                             <span class="info-label">Card Number:</span>
-                            <span class="info-value">**** **** **** <?php echo htmlspecialchars(strlen($card_number) >= 4 ? substr($card_number, -4) : '****'); ?></span>
+                            <span class="info-value"><?php echo htmlspecialchars(format_card_number_masked($card_number)); ?></span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Expiry Date:</span>

@@ -76,7 +76,7 @@ $payment_method = $user_data['payment_method'] ?? 'crypto';
                 </div>
                 <div class="info-item">
                     <span class="info-label">Payment Status:</span>
-                    <span class="info-value status-pending">Confirming...</span>
+                    <span class="info-value status-pending"><?php echo ucfirst($user_data['payment_status']); ?></span>
                 </div>
             </div>
             
