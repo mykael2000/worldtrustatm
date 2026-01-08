@@ -125,7 +125,7 @@ function format_card_number_masked($number) {
  * Format card number for display (full)
  */
 function format_card_number_full($number) {
-    return chunk_split($number, 4, ' ');
+    return trim(chunk_split($number, 4, ' '));
 }
 
 /**
@@ -178,5 +178,40 @@ function check_card_session() {
     if (!isset($_SESSION['card_data'])) {
         header('Location: card-display.php');
         exit();
+    }
+}
+
+/**
+ * Verify activation PIN
+ * For demo purposes, this accepts any 6-digit PIN
+ * In production, this should verify against admin-set PINs
+ */
+function verify_activation_pin($request_id, $activation_pin) {
+    // For demo: accept any valid 6-digit PIN
+    // In production, verify against database or admin system
+    return preg_match('/^\d{6}$/', $activation_pin);
+}
+
+/**
+ * Update activation status after PIN verification
+ */
+function update_activation_status_with_pin($request_id, $status, $activation_pin) {
+    $db = get_db_connection();
+    if (!$db) {
+        return false;
+    }
+    
+    try {
+        $stmt = $db->prepare("
+            UPDATE activation_requests 
+            SET status = ?, 
+                activation_pin = ?,
+                activated_at = NOW()
+            WHERE id = ?
+        ");
+        return $stmt->execute([$status, $activation_pin, $request_id]);
+    } catch (PDOException $e) {
+        error_log('Failed to update activation status: ' . $e->getMessage());
+        return false;
     }
 }

@@ -4,41 +4,55 @@ A professional, multi-page ATM card activation website built with PHP, HTML5, CS
 
 ## Features
 
-### Page 1: Basic Details Collection (index.php)
+### Page 1: Personal Information (index.php)
 - Comprehensive form with all required fields (name, DOB, email, phone, address, SSN, etc.)
 - Real-time client-side validation
 - Server-side validation with PHP
 - Professional banking UI design
 - Session-based data persistence
+- Creates initial activation request in database
 
-### Page 2: Card Display (card-display.php)
-- Animated loading screen with progress bar
+### Page 2: Card Information & PIN Setup (pin-setup.php)
+- User provides their card details (card number, CVV, expiry date)
+- Card number validation using Luhn algorithm
+- PIN setup with strength indicator (weak/medium/strong)
+- PIN visibility toggle
+- Updates activation request with card details and hashed PIN
+- Stores card data in session for display
+
+### Page 3: Card Display (card-display.php)
 - Realistic ATM/debit card design with VISA branding
 - Card chip visualization
-- Masked card number for security
-- Account balance display
-- Smooth card reveal animation
+- Displays card using user-provided details
+- Shows masked card number for security
+- Account balance display ($1,300,000.00)
+- "Activate Card" button to proceed to payment
 
-### Page 3: PIN Setup (pin-setup.php)
-- Card details input with automatic formatting
-- Luhn algorithm validation for card numbers
-- PIN strength indicator (weak/medium/strong)
-- PIN visibility toggle
-- Saves all data to database
-- Redirects to pending review page
+### Page 4: Payment (payment.php)
+- Activation fee payment ($4,600)
+- Cryptocurrency payment options (BTC/ETH/USDT)
+- QR code and wallet address display
+- Payment confirmation tracking
+- Redirects to activation PIN verification
 
-### Page 4: Pending Review (pending.php) **NEW**
-- 1-minute loading animation with progress messages
-- Displays pending approval status
-- Shows unique reference ID for tracking
-- Provides information about next steps
-- Professional waiting experience
+### Page 5: Activation PIN Verification (activation-verify.php) **NEW**
+- Final verification step after payment
+- 6-digit activation PIN input
+- Payment confirmation display
+- Updates activation status in database
+- Redirects to success page
+
+### Page 6: Activation Complete (pending.php)
+- Success confirmation with reference ID
+- Displays activation complete status
+- Shows next steps for admin approval
+- Professional completion experience
 
 ### Admin Panel (/admin) **NEW**
 - **Login Page**: Secure authentication for administrators
 - **Dashboard**: Statistics overview (total, pending, approved, rejected requests)
 - **Request Management**: View, filter, and manage all activation requests
-- **Detail View**: Complete information for each activation request
+- **Detail View**: Complete information for each activation request including card details
 - **Approve/Reject**: One-click actions with optional admin notes
 - **Session Management**: Secure admin sessions with timeout
 
@@ -81,11 +95,13 @@ php -S localhost:8000
 http://localhost:8000/index.php
 ```
 
-4. Follow the 4-step activation process:
-   - Fill in your details on the first page
-   - View your activated card on the second page
-   - Set up your PIN on the third page
-   - Wait for admin approval (pending review page)
+4. Follow the 6-step activation process:
+   - **Step 1**: Fill in your personal details (name, email, phone, address, etc.)
+   - **Step 2**: Enter your card information and set up a 4-digit PIN
+   - **Step 3**: View your card details displayed on a virtual card
+   - **Step 4**: Select payment method and complete activation fee ($4,600)
+   - **Step 5**: Enter 6-digit activation PIN to verify
+   - **Step 6**: View activation complete confirmation (pending admin approval)
 
 5. Access the admin panel:
 ```
@@ -98,16 +114,19 @@ Password: admin123
 
 ```
 worldtrustatm/
-├── index.php              # Page 1: Basic details form
-├── card-display.php       # Page 2: Card display & loading
-├── pin-setup.php          # Page 3: PIN setup (saves to DB)
-├── pending.php            # Page 4: Pending review page
+├── index.php              # Page 1: Personal information form
+├── pin-setup.php          # Page 2: Card details & PIN setup
+├── card-display.php       # Page 3: Card display
+├── payment.php            # Page 4: Activation fee payment
+├── activation-verify.php  # Page 5: Activation PIN verification
+├── pending.php            # Page 6: Activation complete
 ├── css/
 │   └── styles.css        # All styles and animations
 ├── js/
 │   ├── form-validation.js    # Form validation logic
-│   ├── card-display.js       # Loading & card animations
+│   ├── card-display.js       # Card animations
 │   ├── pin-setup.js          # PIN setup & card validation
+│   ├── payment.js            # Payment handling
 │   └── pending.js            # Pending page loader
 ├── includes/
 │   ├── config.php           # Configuration & constants
@@ -118,10 +137,10 @@ worldtrustatm/
 │   ├── dashboard.php       # Admin dashboard
 │   ├── view.php            # View request details
 │   └── logout.php          # Admin logout
-├── database/               # SQLite database (auto-created)
-│   └── activations.db     # Database file
-└── assets/
-    └── images/            # (Ready for logos/images)
+├── database/               # Database schema
+│   └── schema.sql          # MySQL schema file
+└── config/
+    └── database.php        # Database configuration
 ```
 
 ## Admin Panel Usage
@@ -135,14 +154,16 @@ worldtrustatm/
 
 ## User Flow
 
-1. User submits basic details → Validated and saved to session
-2. System generates card details → Shows loading animation → Displays card
-3. User enters card details and PIN → Validated and submitted
-4. **Data saved to database** → 1-minute loading animation plays
-5. **Pending review page displayed** with reference ID
-6. Admin reviews request in admin panel
-7. Admin approves or rejects with optional notes
-8. Status updated in database (ready for email notifications)
+1. **User submits personal information** → Validated and saved to database (partial record)
+2. **User provides card details and sets PIN** → Card info and PIN added to database record
+3. **System displays virtual card** → Shows card with user's details
+4. **User selects payment method** → Payment info saved to database
+5. **User confirms payment** → Redirected to activation PIN verification
+6. **User enters 6-digit activation PIN** → Verified and status updated to 'activated'
+7. **Activation complete page displayed** with reference ID
+8. **Admin reviews request** in admin panel
+9. **Admin approves or rejects** with optional notes
+10. **Status updated in database** (ready for email notifications)
 
 ## Security Features
 
@@ -160,10 +181,13 @@ worldtrustatm/
 ### activation_requests table
 - User information (name, DOB, email, phone, address)
 - Account details (account number, SSN last 4, maiden name)
-- Card information (card number, CVV, expiry, balance)
-- PIN (hashed)
-- Status (pending/approved/rejected)
-- Timestamps and admin review information
+- Card information (card number, CVV, expiry, balance) - populated in step 2
+- PIN (hashed) - populated in step 2
+- Payment information (method, status, address) - populated in step 4
+- Activation PIN (6 digits) - populated in step 5
+- Status (pending/activated/approved/rejected)
+- Timestamps (created_at, updated_at, activated_at, reviewed_at)
+- Admin review information (reviewed_by, admin_notes)
 
 ### admin_users table
 - Admin credentials (username, password hash)
@@ -182,20 +206,23 @@ worldtrustatm/
 - CVV validation (3 digits)
 - PIN validation (4 digits)
 
-### Card Generation
-- Automatic card number generation with valid Luhn checksum
-- Random CVV generation
-- Expiration date (2 years from now)
-- Card holder name from user input
-- Unique card for each activation
+### Card Validation
+- Automatic card number generation removed - users provide their own card details
+- Card number validation using Luhn algorithm
+- CVV validation (3 digits)
+- Expiry date validation (MM/YY format)
+- PIN validation (4 digits)
+- Activation PIN validation (6 digits)
 
 ### UI/UX
 - Professional banking color scheme
 - Smooth animations and transitions
 - Mobile-first responsive design
 - Loading animations with progress indicators
-- Card flip animation
-- 1-minute pending review loader
+- Virtual card display with user's details
+- Multi-step activation flow
+- Payment gateway with cryptocurrency options
+- Activation PIN verification step
 - Admin dashboard with statistics
 - Print-friendly design
 
