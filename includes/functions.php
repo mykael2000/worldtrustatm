@@ -118,6 +118,9 @@ function generate_card_number() {
  * Format card number for display (masked)
  */
 function format_card_number_masked($number) {
+    if (empty($number) || strlen($number) < 4) {
+        return '**** **** **** ****';
+    }
     return '**** **** **** ' . substr($number, -4);
 }
 
