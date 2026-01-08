@@ -94,7 +94,7 @@ $payment_method = $user_data['payment_method'] ?? 'crypto';
                     📧 <?php echo htmlspecialchars($email); ?>
                 </p>
                 <p style="color: #856404; font-size: 13px; line-height: 1.6;">
-                    Please check your inbox (and spam folder) for an email from <strong>World Trust Holding</strong> 
+                    Please check your inbox (and spam folder) for an email from <strong><?php echo APP_NAME; ?></strong> 
                     with your activation PIN. You will need this PIN to complete your card activation.
                 </p>
             </div>

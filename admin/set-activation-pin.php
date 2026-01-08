@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_pin'])) {
     } else {
         // Generate or use custom PIN
         if ($auto_generate) {
-            $activation_pin = str_pad(random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $activation_pin = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         } else {
             // Validate custom PIN
             if (!preg_match('/^\d{6}$/', $custom_pin)) {
@@ -68,10 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_pin'])) {
             $admin_username = $_SESSION['admin_username'] ?? 'admin';
             $stmt->execute([$activation_pin, $admin_username, $user_id]);
             
-            // TODO: Send email to user with PIN
+            // NOTE: Email sending functionality not implemented yet
+            // Admin must manually send the PIN to the user via email
+            // TODO: Implement email sending functionality
             // send_activation_pin_email($selected_user['email'], $activation_pin, $selected_user['first_name']);
             
-            $success_message = "Activation PIN ({$activation_pin}) set for {$selected_user['first_name']} {$selected_user['last_name']}. PIN sent to {$selected_user['email']}.";
+            $success_message = "Activation PIN ({$activation_pin}) has been set for {$selected_user['first_name']} {$selected_user['last_name']}. Please manually send this PIN to {$selected_user['email']}.";
         }
     }
 }
