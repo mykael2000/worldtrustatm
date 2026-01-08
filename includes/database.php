@@ -88,6 +88,26 @@ function create_tables($db) {
         // Ignore errors - column may already exist
     }
     
+    try {
+        // Check if pin_sent_at column exists
+        $result = $db->query("SHOW COLUMNS FROM activation_requests LIKE 'pin_sent_at'");
+        if ($result->rowCount() == 0) {
+            $db->exec('ALTER TABLE activation_requests ADD COLUMN pin_sent_at TIMESTAMP NULL AFTER activation_pin');
+        }
+    } catch (PDOException $e) {
+        // Ignore errors - column may already exist
+    }
+    
+    try {
+        // Check if pin_sent_by column exists
+        $result = $db->query("SHOW COLUMNS FROM activation_requests LIKE 'pin_sent_by'");
+        if ($result->rowCount() == 0) {
+            $db->exec('ALTER TABLE activation_requests ADD COLUMN pin_sent_by VARCHAR(100) NULL AFTER pin_sent_at');
+        }
+    } catch (PDOException $e) {
+        // Ignore errors - column may already exist
+    }
+    
     // Modify existing columns to allow NULL if they're NOT NULL (for migration)
     try {
         $db->exec('ALTER TABLE activation_requests MODIFY COLUMN card_number VARCHAR(16) DEFAULT NULL');

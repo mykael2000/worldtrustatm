@@ -54,6 +54,32 @@ $requests = get_activation_requests($status_filter, 100, 0);
             max-width: 1400px;
             margin: 20px auto;
         }
+        .admin-nav {
+            background: var(--white);
+            padding: 15px 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .admin-nav a {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .admin-nav a:hover {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+        }
+        .admin-nav a.active {
+            background: var(--primary-blue);
+            color: var(--white);
+        }
     </style>
 </head>
 <body>
@@ -67,6 +93,12 @@ $requests = get_activation_requests($status_filter, 100, 0);
                 <a href="logout.php" class="logout-btn">Logout</a>
             </div>
         </header>
+
+        <!-- Admin Navigation -->
+        <nav class="admin-nav">
+            <a href="dashboard.php" class="active">Dashboard</a>
+            <a href="set-activation-pin.php">Set Activation PIN</a>
+        </nav>
 
         <div class="admin-container">
             <!-- Statistics -->
