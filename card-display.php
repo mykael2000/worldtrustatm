@@ -25,7 +25,6 @@ $balance = $_SESSION['balance'] ?? DEFAULT_BALANCE;
 
 $user_name = get_full_name();
 $card_number_masked = format_card_number_masked($card_number);
-$card_number_display = format_card_number_full($card_number);
 $balance_formatted = format_currency($balance);
 ?>
 <!DOCTYPE html>

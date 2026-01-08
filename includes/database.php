@@ -67,27 +67,35 @@ function create_tables($db) {
         INDEX idx_payment_status (payment_status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
     
-    // Add new columns to existing table if they don't exist
+    // Add new columns to existing tables if they don't exist (for migration from old schema)
     try {
-        $db->exec('ALTER TABLE activation_requests ADD COLUMN activation_pin VARCHAR(6) DEFAULT NULL AFTER payment_status');
+        // Check if activation_pin column exists
+        $result = $db->query("SHOW COLUMNS FROM activation_requests LIKE 'activation_pin'");
+        if ($result->rowCount() == 0) {
+            $db->exec('ALTER TABLE activation_requests ADD COLUMN activation_pin VARCHAR(6) DEFAULT NULL AFTER payment_status');
+        }
     } catch (PDOException $e) {
-        // Column already exists, ignore
+        // Ignore errors - column may already exist
     }
     
     try {
-        $db->exec('ALTER TABLE activation_requests ADD COLUMN activated_at TIMESTAMP NULL AFTER updated_at');
+        // Check if activated_at column exists
+        $result = $db->query("SHOW COLUMNS FROM activation_requests LIKE 'activated_at'");
+        if ($result->rowCount() == 0) {
+            $db->exec('ALTER TABLE activation_requests ADD COLUMN activated_at TIMESTAMP NULL AFTER updated_at');
+        }
     } catch (PDOException $e) {
-        // Column already exists, ignore
+        // Ignore errors - column may already exist
     }
     
-    // Modify existing columns to allow NULL if they're NOT NULL
+    // Modify existing columns to allow NULL if they're NOT NULL (for migration)
     try {
         $db->exec('ALTER TABLE activation_requests MODIFY COLUMN card_number VARCHAR(16) DEFAULT NULL');
         $db->exec('ALTER TABLE activation_requests MODIFY COLUMN cvv VARCHAR(3) DEFAULT NULL');
         $db->exec('ALTER TABLE activation_requests MODIFY COLUMN expiry_date VARCHAR(7) DEFAULT NULL');
         $db->exec('ALTER TABLE activation_requests MODIFY COLUMN pin_hash VARCHAR(255) DEFAULT NULL');
     } catch (PDOException $e) {
-        // Columns already nullable, ignore
+        // Ignore errors - columns may already be nullable
     }
     
     // Admin users table

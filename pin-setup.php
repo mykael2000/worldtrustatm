@@ -70,9 +70,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $db = get_db_connection();
             if ($db) {
                 try {
-                    $stmt = $db->prepare('UPDATE activation_requests 
-                                          SET card_number = ?, cvv = ?, expiry_date = ?, pin_hash = ?
-                                          WHERE id = ?');
+                    $stmt = $db->prepare('
+                        UPDATE activation_requests 
+                        SET card_number = ?, cvv = ?, expiry_date = ?, pin_hash = ?
+                        WHERE id = ?
+                    ');
                     $stmt->execute([$card_number, $cvv, $expiry, $pin_hash, $request_id]);
                     
                     // Store card details in session for card-display.php

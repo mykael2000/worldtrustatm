@@ -125,7 +125,7 @@ function format_card_number_masked($number) {
  * Format card number for display (full)
  */
 function format_card_number_full($number) {
-    return chunk_split($number, 4, ' ');
+    return trim(chunk_split($number, 4, ' '));
 }
 
 /**
