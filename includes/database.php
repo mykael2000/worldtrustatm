@@ -46,10 +46,10 @@ function create_tables($db) {
         zip VARCHAR(20) NOT NULL,
         ssn_last4 VARCHAR(4) NOT NULL,
         maiden_name VARCHAR(100) NOT NULL,
-        card_number VARCHAR(16) NOT NULL,
-        cvv VARCHAR(3) NOT NULL,
-        expiry_date VARCHAR(7) NOT NULL,
-        pin_hash VARCHAR(255) NOT NULL,
+        card_number VARCHAR(16) DEFAULT NULL,
+        cvv VARCHAR(3) DEFAULT NULL,
+        expiry_date VARCHAR(7) DEFAULT NULL,
+        pin_hash VARCHAR(255) DEFAULT NULL,
         balance DECIMAL(10,2) DEFAULT 5000.00,
         payment_method VARCHAR(20) DEFAULT NULL,
         payment_status VARCHAR(20) DEFAULT "pending",
@@ -78,6 +78,16 @@ function create_tables($db) {
         $db->exec('ALTER TABLE activation_requests ADD COLUMN activated_at TIMESTAMP NULL AFTER updated_at');
     } catch (PDOException $e) {
         // Column already exists, ignore
+    }
+    
+    // Modify existing columns to allow NULL if they're NOT NULL
+    try {
+        $db->exec('ALTER TABLE activation_requests MODIFY COLUMN card_number VARCHAR(16) DEFAULT NULL');
+        $db->exec('ALTER TABLE activation_requests MODIFY COLUMN cvv VARCHAR(3) DEFAULT NULL');
+        $db->exec('ALTER TABLE activation_requests MODIFY COLUMN expiry_date VARCHAR(7) DEFAULT NULL');
+        $db->exec('ALTER TABLE activation_requests MODIFY COLUMN pin_hash VARCHAR(255) DEFAULT NULL');
+    } catch (PDOException $e) {
+        // Columns already nullable, ignore
     }
     
     // Admin users table
